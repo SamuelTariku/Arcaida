@@ -20,6 +20,12 @@ class CLI:
         for command in commands:
             commandDict[command.name] = command
 
+        exitCommand = Command("exit", self.close)
+        helpCommand = Command("help", self.helpText)
+
+        commandDict[exitCommand.name] = exitCommand
+        commandDict[helpCommand.name] = helpCommand
+
         return commandDict
 
     def run(self):
@@ -51,3 +57,10 @@ class CLI:
 
     def close(self):
         self.running = False
+
+    def helpText(self):
+        print()
+        print(" Command List \n", "_" * 30)
+        for command in self.commands.keys():
+            print(command)
+        print()
