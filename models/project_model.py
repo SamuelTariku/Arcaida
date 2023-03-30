@@ -2,6 +2,9 @@ from peewee import *
 from utils.config import database
 
 
-class PMS(Model):
+class Project(Model):
+    name = CharField()
+    started = BooleanField(default=False)
+
     class Meta:
         database = database

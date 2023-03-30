@@ -1,5 +1,7 @@
 
-from models.project import Project
+import models
+
 
 def create_tables():
-    Project.create_table(True)
+    models.project.Project.create_table(True)
+    models.task.Task.create_table(True)
