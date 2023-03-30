@@ -1,7 +1,7 @@
 
-import models
+from models import project_model, task_model
 
 
 def create_tables():
-    models.project.Project.create_table(True)
-    models.task.Task.create_table(True)
+    project_model.Project.create_table(True)
+    task_model.Task.create_table(True)

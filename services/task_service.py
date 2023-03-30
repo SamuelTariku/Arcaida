@@ -2,6 +2,7 @@ from models.task_model import Task
 
 
 def createTask(name, project):
+
     newTask = Task.create(
         name=name,
         project=project
@@ -25,14 +26,23 @@ def getTasksByProject(id):
     )
 
 
+def countProjectTasks(project):
+    tasks = Task.select().where(
+        Task.project == project.id
+    ).count()
+
+    return tasks
+
+
 def updateTask(id, name=None, status=None):
     task = Task.get_by_id(id)
     if(name):
         task.name = name
     if(status):
         task.status = status
-    
+
     Task.save()
+
 
 def deleteTask(id):
     query = Task.delete().where(Task.id == id)

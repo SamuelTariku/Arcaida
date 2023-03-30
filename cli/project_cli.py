@@ -9,7 +9,7 @@ class ProjectCLI(CLI):
         super().__init__()
 
         self.project = project
-        self.prompt = "Project {} >".format(project.name)
+        self.prompt = "#Project {}> ".format(project.name)
         self.commands = self.generateCommandDict([
             Command("create", self.createTaskCommand, 1),
             Command("view", self.viewAllTaskCommand),
@@ -27,8 +27,14 @@ class ProjectCLI(CLI):
 
     def viewAllTaskCommand(self, args=None):
         tasks = task_service.getAllTasks()
+        print()
         for task in tasks:
-            print(str(task.id) + ") " + "[ ] " + task.name)
+            raw = "{num:>3}) {name:<38} [ ]".format(
+                num=task.id,
+                name=task.name
+            )
+            print(raw)
+        print()
 
     def renameTaskCommand(self, args):
         update = task_service.updateTask(args[0], name=" ".join(args[1::]))
