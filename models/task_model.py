@@ -15,6 +15,10 @@ class Task(Model):
     name = CharField()
     status = IntegerField(default=1)
     project = ForeignKeyField(Project, backref="tasks")
+    order = IntegerField(null=True)
 
     class Meta:
         database = database
+        indexes = (
+            (('project', 'order'), True),
+        )

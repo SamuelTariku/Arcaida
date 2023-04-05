@@ -16,6 +16,8 @@ class ProjectCLI(CLI):
             Command("rename", self.renameTaskCommand, 2),
             Command("clear", self.clearAllTaskCommand),
             Command("remove", self.removeTaskCommand, 1),
+            Command("reorder", self.reorderTaskCommand, 2),
+
         ])
 
     def createTaskCommand(self, args):
@@ -26,25 +28,47 @@ class ProjectCLI(CLI):
             Logger.success("Task is created!")
 
     def viewAllTaskCommand(self, args=None):
-        tasks = task_service.getAllTasks()
+        tasks = task_service.getTasksByProject(self.project.id)
         print()
         for task in tasks:
+
             raw = "{num:>3}) {name:<38} [ ]".format(
-                num=task.id,
+                num=task.order,
                 name=task.name
             )
             print(raw)
         print()
 
     def renameTaskCommand(self, args):
-        update = task_service.updateTask(args[0], name=" ".join(args[1::]))
+        task = task_service.getTaskByOrder(self.project.id, args[0])
+        update = task_service.updateTask(task, name=" ".join(args[1::]))
+
         if(update):
             Logger.info("Task Name: {name}".format(
                 name=" ".join(args[1::])))
             Logger.success("Task name is updated!")
 
-    def clearAllTaskCommand(self, args):
-        pass
+    def clearAllTaskCommand(self, args=None):
+        clear = task_service.deleteTasksForProject(self.project.id)
+
+        if(clear):
+            Logger.info("Number of tasks deleted: {num}".format(
+                num=clear
+            ))
+            Logger.success("All project tasks have been deleted!")
 
     def removeTaskCommand(self, args):
-        pass
+        task = task_service.getTaskByOrder(self.project.id, args[0])
+        remove = task_service.deleteTask(task)
+
+        if(remove):
+            Logger.info("Number of tasks deleted: {num}".format(
+                num=remove
+            ))
+            Logger.success("Task has been deleted!")
+
+    def reorderTaskCommand(self, args):
+        reorder = task_service.updateOrder(self.project.id, args[0], args[1])
+        if(reorder):
+            Logger.success("Task has been moved!")
+            self.viewAllTaskCommand()
