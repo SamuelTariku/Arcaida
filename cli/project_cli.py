@@ -16,7 +16,7 @@ class ProjectCLI(CLI):
             Command("rename", self.renameTaskCommand, 2),
             Command("clear", self.clearAllTaskCommand),
             Command("remove", self.removeTaskCommand, 1),
-            Command("reorder", self.reorderTaskCommand, 2),
+            Command("reorder", self.reorderTaskCommand, 1),
 
         ])
 
@@ -68,6 +68,12 @@ class ProjectCLI(CLI):
             Logger.success("Task has been deleted!")
 
     def reorderTaskCommand(self, args):
+
+        if(args[0] == "all"):
+            task_service.reassignOrder(self.project.id)
+            Logger.success("Tasks have been reordered")
+            return
+
         reorder = task_service.updateOrder(self.project.id, args[0], args[1])
         if(reorder):
             Logger.success("Task has been moved!")

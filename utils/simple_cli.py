@@ -20,18 +20,18 @@ class CLI:
         for command in commands:
             commandDict[command.name] = command
 
-        exitCommand = Command("exit", self.close)
-        helpCommand = Command("help", self.helpText)
-
-        commandDict[exitCommand.name] = exitCommand
-        commandDict[helpCommand.name] = helpCommand
+        commandDict["exit"] = Command("exit", self.close)
+        commandDict["back"] = Command("back", self.back)
+        commandDict["help"] = Command("help", self.helpText)
 
         return commandDict
 
     def run(self):
+        close = False
         while self.running:
             argument = input(self.prompt)
-            self.parse(argument)
+            close = self.parse(argument)
+        return close
 
     def parse(self, argument):
         argList = argument.split()
@@ -46,17 +46,24 @@ class CLI:
             return
 
         if(command.count > (len(argList) - 1)):
-            Logger.error("Not enough commands! Check documentation")
+            Logger.error("Not enough arguments! Check documentation")
             print(argList)
             return
 
         if(command.count == 0):
-            command.function()
+            exitValue = command.function()
         else:
-            command.function(argList[1::])
+            exitValue = command.function(argList[1::])
+
+        return exitValue
 
     def close(self):
         self.running = False
+        return True
+
+    def back(self):
+        self.running = False
+        return False
 
     def helpText(self):
         print()

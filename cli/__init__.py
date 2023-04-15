@@ -28,8 +28,10 @@ class BaseCLI(CLI):
     # TODO: add filters
     def viewAllProjectCommand(self, args=None):
         projects = project_service.getAllProject()
+        print()
         for project in projects:
-            print(str(project.id) + ") " + project.name)
+            print(" ", str(project.id) + ") " + project.name)
+        print()
 
     def renameProjectCommand(self, args):
         update = project_service.updateProjectName(
@@ -62,4 +64,7 @@ class BaseCLI(CLI):
         project = project_service.getOneProject(args[0])
 
         projectCLI = ProjectCLI(project)
-        projectCLI.run()
+        close = projectCLI.run()
+
+        if(close):
+            self.close()

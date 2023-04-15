@@ -19,6 +19,6 @@ class Task(Model):
 
     class Meta:
         database = database
-        indexes = (
-            (('project', 'order'), True),
-        )
+        # indexes = (
+        #     (('project', 'order'), True),
+        # )

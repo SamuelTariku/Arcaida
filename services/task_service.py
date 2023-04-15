@@ -35,30 +35,32 @@ def updateOrder(projectID, current, destination):
     # Update all the records that are between the values
     if(initial < final):
         query = Task.update(order=Task.order - 1).where(
-            (Task.project == projectID)
+            (Task.project == projectID) &
             (Task.order > initial) & (Task.order <= final)
         )
         query.execute()
     elif(initial > final):
-        # query = Task.update(order=Task.order + 1).where(
-        #     (Task.order < initial) & (Task.order >= final)
-        # ).order_by(Task.order.desc())
-        database.execute_sql("""
-        UPDATE "task" 
-        SET "order" = ("task"."order" + 1)
-        FROM (
-            SELECT "order"
-            FROM "task"
-            ORDER BY "order" DESC
-        ) as ts
-        WHERE (("ts"."order" < {final}) AND ("ts"."order" >= {initial}))
-        """.format(initial=initial, final=final))
+        query = Task.update(order=Task.order + 1).where(
+            (Task.order < initial) & (Task.order >= final)
+        )
+        query.execute()
+
+        # database.execute_sql("""
+        # UPDATE "task"
+        # SET "order" = ("task"."order" + 1)
+        # FROM (
+        #     SELECT "order"
+        #     FROM "task"
+        #     ORDER BY "order" DESC
+        # ) as ts
+        # WHERE (("ts"."order" < {final}) AND ("ts"."order" >= {initial}))
+        # """.format(initial=initial, final=final))
 
     # Now that destination is moved
     movedTask.order = final
     movedTask.save()
 
-    return movedTask
+    # return movedTask
 
 
 def createTask(name, project):
