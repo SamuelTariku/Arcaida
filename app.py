@@ -3,6 +3,11 @@ from cli import BaseCLI
 from models import create_tables
 from utils.config import database
 from utils.log import Logger
+from colorama import init, deinit, Fore, Style
+
+
+init()
+
 
 # Generate header text
 print("-" * 50)
@@ -21,3 +26,6 @@ Logger.success("database connected!")
 app = BaseCLI()
 
 app.run()
+
+
+deinit()

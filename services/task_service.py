@@ -28,7 +28,7 @@ def updateOrder(projectID, current, destination):
 
     movedTask = tasks[initial-1]
 
-    # Avoiding unique constraint
+    # Set the initial order position to null
     movedTask.order = None
     movedTask.save()
 
@@ -45,22 +45,12 @@ def updateOrder(projectID, current, destination):
         )
         query.execute()
 
-        # database.execute_sql("""
-        # UPDATE "task"
-        # SET "order" = ("task"."order" + 1)
-        # FROM (
-        #     SELECT "order"
-        #     FROM "task"
-        #     ORDER BY "order" DESC
-        # ) as ts
-        # WHERE (("ts"."order" < {final}) AND ("ts"."order" >= {initial}))
-        # """.format(initial=initial, final=final))
-
     # Now that destination is moved
     movedTask.order = final
     movedTask.save()
 
     # return movedTask
+    return movedTask
 
 
 def createTask(name, project):

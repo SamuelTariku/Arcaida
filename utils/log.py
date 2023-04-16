@@ -5,7 +5,6 @@ class Logger:
 
     def success(text):
         print(Fore.GREEN + "[+]", text, Fore.RESET)
-
     def error(text):
         print(Fore.RED + "[!]", text, Fore.RESET)
 

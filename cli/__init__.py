@@ -25,7 +25,7 @@ class BaseCLI(CLI):
             Logger.info("Project Name: {name}".format(name=newProject.name))
             Logger.success("Project is created!")
 
-    # TODO: add filters
+    # TODO: add filters 
     def viewAllProjectCommand(self, args=None):
         projects = project_service.getAllProject()
         print()

@@ -27,11 +27,11 @@ class CLI:
         return commandDict
 
     def run(self):
-        close = False
+        exitValue = None
         while self.running:
             argument = input(self.prompt)
-            close = self.parse(argument)
-        return close
+            exitValue = self.parse(argument)
+        return exitValue
 
     def parse(self, argument):
         argList = argument.split()

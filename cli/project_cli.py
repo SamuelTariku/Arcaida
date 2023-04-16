@@ -1,6 +1,8 @@
 from utils.simple_cli import *
 from utils.log import Logger
 from services import task_service
+from models.task_model import Status
+from colorama import Fore, Back, Style
 
 
 class ProjectCLI(CLI):
@@ -29,14 +31,33 @@ class ProjectCLI(CLI):
 
     def viewAllTaskCommand(self, args=None):
         tasks = task_service.getTasksByProject(self.project.id)
+
         print()
         for task in tasks:
+            status = ""
 
-            raw = "{num:>3}) {name:<38} [ ]".format(
+            if(task.status == Status.BACKLOG.value):
+                status = " "
+            elif(task.status == Status.IN_PROGRESS.value):
+                status = "*"
+            elif(task.status == Status.DONE.value):
+                status = "X"
+            elif(task.status == Status.TESTING.value):
+                status = "&"
+
+            raw = "{num:>3}) {name:<38} [{status:<1}]".format(
                 num=task.order,
-                name=task.name
+                name=task.name,
+                status=status
             )
-            print(raw)
+
+            if(task.status == Status.IN_PROGRESS.value):
+                print(Back.BLUE + raw, Back.RESET)
+            elif(task.status == Status.DONE.value):
+                print(Fore.LIGHTBLACK_EX + raw, Fore.RESET)
+            else:
+                print(raw)
+
         print()
 
     def renameTaskCommand(self, args):
