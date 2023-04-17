@@ -25,12 +25,15 @@ class BaseCLI(CLI):
             Logger.info("Project Name: {name}".format(name=newProject.name))
             Logger.success("Project is created!")
 
-    # TODO: add filters 
+    # TODO: add filters
     def viewAllProjectCommand(self, args=None):
         projects = project_service.getAllProject()
         print()
         for project in projects:
-            print(" ", str(project.id) + ") " + project.name)
+            print("{id:>3}) {name:<38}".format(
+                id=project.id,
+                name=project.name
+            ))
         print()
 
     def renameProjectCommand(self, args):
