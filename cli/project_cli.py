@@ -17,6 +17,7 @@ class ProjectCLI(CLI):
             Command("bulk-create", self.bulkCreateTaskCommand),
             Command("view", self.viewTaskCommand),
             Command("status", self.statusTaskCommand, 2),
+            Command("status-next", self.statusNextTaskCommand),
             Command("rename", self.renameTaskCommand, 2),
             Command("clear", self.clearAllTaskCommand),
             Command("remove", self.removeTaskCommand, 1),
@@ -94,11 +95,21 @@ class ProjectCLI(CLI):
 
     def statusTaskCommand(self, args):
         task = task_service.getTaskByOrder(self.project.id, args[0])
+
+        if(task == None):
+            Logger.error("There is no task with that order")
+            return
         status = None
         if(args[1].lower() == "backlog"):
             status = Status.BACKLOG.value
         elif(args[1].lower() == "current"):
-            # TODO: make it so that there can only be one in-progress task
+            currentTasks = task_service.findAllTaskStatusForProject(
+                Status.IN_PROGRESS.value, self.project.id)
+
+            if(len(currentTasks) >= 1):
+                Logger.error("There can only be one IN-PROGRESS task")
+                return
+
             status = Status.IN_PROGRESS.value
 
         elif(args[1].lower() == "test"):
@@ -111,10 +122,67 @@ class ProjectCLI(CLI):
         if(update):
             Logger.info("Task Name: {name}".format(
                 name=task.name))
-            Logger.success("Task name is updated!")
+            Logger.success("Task status is set to {status}!".format(
+                status=Status(status).name))
+
+    def statusNextTaskCommand(self, args=None):
+
+        inProgress = task_service.findAllTaskStatusForProject(
+            Status.IN_PROGRESS.value, self.project.id)
+
+        # If there are no tasks in progress
+        if(len(inProgress) == 0):
+            backlogTasks = task_service.findAllTaskStatusForProject(
+                Status.BACKLOG.value, self.project.id)
+
+            if(len(backlogTasks) == 0):
+                Logger.error("There are no remaining tasks")
+                return
+
+            firstTask = backlogTasks[0]
+
+            task_service.updateTask(firstTask, status=Status.IN_PROGRESS.value)
+
+            Logger.info("Task Name: {name}".format(
+                name=firstTask.name))
+            Logger.success("Task status is set to {status}!".format(
+                status=Status.IN_PROGRESS.name))
+
+            return
+
+        currentTask = inProgress[0]
+
+        nextTask = task_service.getTaskByOrder(
+            self.project.id, currentTask.order + 1)
+
+        updateCurrentTask = task_service.updateTask(
+            currentTask, status=Status.DONE.value)
+
+        if(updateCurrentTask == None):
+            Logger.error("Cannot update currentTask")
+            return
+
+        updateNextTask = task_service.updateTask(
+            nextTask, status=Status.IN_PROGRESS.value)
+
+        if(updateNextTask == None):
+            Logger.error("Cannot update currentTask")
+            return
+
+        Logger.info("IN-PROGRESS Task Name: {name}".format(
+            name=currentTask.name))
+        Logger.success("Task status is set to {status}!".format(
+            status=Status.DONE.name))
+        Logger.info("Next Task Name: {name}".format(
+            name=nextTask.name))
+        Logger.success("Task status is set to {status}!".format(
+            status=Status.IN_PROGRESS.name))
 
     def renameTaskCommand(self, args):
         task = task_service.getTaskByOrder(self.project.id, args[0])
+        if(task == None):
+            Logger.error("There is no task with that order")
+            return
         update = task_service.updateTask(task, name=" ".join(args[1::]))
 
         if(update):
@@ -133,6 +201,9 @@ class ProjectCLI(CLI):
 
     def removeTaskCommand(self, args):
         task = task_service.getTaskByOrder(self.project.id, args[0])
+        if(task == None):
+            Logger.error("There is no task with that order")
+            return
         remove = task_service.deleteTask(task)
 
         if(remove):

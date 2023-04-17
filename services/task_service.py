@@ -24,6 +24,14 @@ def getOneTask(id):
 
 
 def getTaskByOrder(projectID, order):
+    tasks = Task.select().where(
+        Task.project == projectID,
+        Task.order == order
+    )
+
+    if(len(tasks) == 0):
+        return None
+
     return Task.select().where(
         Task.project == projectID,
         Task.order == order
@@ -73,6 +81,13 @@ def deleteTasksForProject(id):
 def findAllTaskStatus(status):
     return Task.select().where(
         Task.status == status
+    ).order_by(Task.order)
+
+
+def findAllTaskStatusForProject(status, projectID):
+    return Task.select().where(
+        (Task.status == status) &
+        (Task.project == projectID)
     ).order_by(Task.order)
 
 
