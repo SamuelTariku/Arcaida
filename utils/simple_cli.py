@@ -11,7 +11,7 @@ class Command:
 class CLI:
     def __init__(self) -> None:
         self.running = True
-        self.prompt = "> "
+        self.prompt = ""
         self.commands = {}
 
     def generateCommandDict(self, commands):
@@ -29,7 +29,7 @@ class CLI:
     def run(self):
         exitValue = None
         while self.running:
-            argument = input(self.prompt)
+            argument = input(self.prompt + "> ")
             exitValue = self.parse(argument)
         return exitValue
 

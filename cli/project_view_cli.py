@@ -11,7 +11,7 @@ class ProjectViewCLI(CLI):
         super().__init__()
 
         self.project = project
-        self.prompt = "#Project {}> ".format(project.name)
+        self.prompt = "#Project {}".format(project.name)
         self.commands = self.generateCommandDict([
             Command("create", self.createTaskCommand, 1),
             Command("bulk-create", self.bulkCreateTaskCommand),

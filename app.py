@@ -44,5 +44,7 @@ Logger.success("database connected!")
 app = BaseCLI()
 app.run()
 
-
+Logger.info("closing arcadia...")
+database.close()
+Logger.success("Goodbye!")
 deinit()

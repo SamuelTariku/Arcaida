@@ -1,7 +1,7 @@
 from utils.simple_cli import *
 from services import project_service
 from utils.log import Logger
-
+from colorama import Fore
 from cli.project_view_cli import ProjectViewCLI
 
 
@@ -9,7 +9,7 @@ class ProjectCLI(CLI):
 
     def __init__(self) -> None:
         super().__init__()
-        self.prompt = "project> "
+        self.prompt = "Projects"
         self.commands = self.generateCommandDict([
             Command("create", self.createProjectCommand, 1),
             Command("view", self.viewAllProjectCommand),
@@ -67,7 +67,10 @@ class ProjectCLI(CLI):
         project = project_service.getOneProject(args[0])
 
         projectView = ProjectViewCLI(project)
+
         close = projectView.run()
 
         if(close):
             self.close()
+
+        return close
