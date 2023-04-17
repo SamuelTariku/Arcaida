@@ -20,9 +20,9 @@ class CLI:
         for command in commands:
             commandDict[command.name] = command
 
-        commandDict["exit"] = Command("exit", self.close)
-        commandDict["back"] = Command("back", self.back)
         commandDict["help"] = Command("help", self.helpText)
+        commandDict["back"] = Command("back", self.back)
+        commandDict["exit"] = Command("exit", self.close)
 
         return commandDict
 

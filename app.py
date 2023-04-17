@@ -1,5 +1,5 @@
 from art import tprint
-from cli import BaseCLI
+from cli.root_cli import BaseCLI
 from models import create_tables
 from utils.config import database
 from utils.log import Logger
@@ -24,7 +24,6 @@ Logger.success("database connected!")
 
 # setup cli
 app = BaseCLI()
-
 app.run()
 
 
