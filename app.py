@@ -11,6 +11,7 @@ init()
 
 # Generate header text
 print("-" * 50)
+print(Fore.YELLOW)
 print(r"""
 \\|//   \\|///  \\\|//\\\|/// \|///  \\\|//
 \ |     \ |/       | / \ | /  \|/_      |/
@@ -22,7 +23,8 @@ print(r"""
 """)
 print(Fore.CYAN)
 tprint("Arcadia")
-print(Fore.RESET)
+print(Fore.YELLOW)
+
 print(r"""
               _(_)_                        
   @@@@       (_)@(_)   vVVVv     _     @@@@
@@ -32,6 +34,7 @@ print(r"""
 \ |     \ |/       | / \ | /  \|/       |/
 \\|//   \\|///  \\\|//\\\|/// \|///  \\\|//
 """)
+print(Fore.RESET)
 print("-" * 50)
 
 # connect to the database

@@ -25,7 +25,7 @@ def getOneTask(id):
 
 def getTaskByOrder(projectID, order):
     tasks = Task.select().where(
-        Task.project == projectID,
+        Task.project == projectID &
         Task.order == order
     )
 
@@ -104,6 +104,7 @@ def reassignOrder(projectID):
 	        from task a 
 	        where project_id == {projectID} and task.id == a.id
         )
+        where project_id == {projectID}
     """.format(projectID=projectID)
     )
 
