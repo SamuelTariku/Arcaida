@@ -1,6 +1,6 @@
 from models.project_model import Project
 
-def createProject(name, started=False):
+def createProject(name):
     newProject = Project.create(
         name=name
     )

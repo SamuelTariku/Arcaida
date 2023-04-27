@@ -1,6 +1,7 @@
 from peewee import *
 from utils.config import database
 from models.project_model import Project
+from models.deadline_model import Deadline
 from enum import Enum
 
 
@@ -16,6 +17,7 @@ class Task(Model):
     status = IntegerField(default=1)
     project = ForeignKeyField(Project, backref="tasks")
     order = IntegerField(null=True)
+    deadline = ForeignKeyField(Deadline, backref="tasks")
 
     class Meta:
         database = database
