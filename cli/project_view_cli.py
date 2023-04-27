@@ -61,37 +61,25 @@ class ProjectViewCLI(CLI):
             Logger.success("Tasks have been created!")
 
     def viewTaskCommand(self, args=None):
-        tasks = task_service.getTasksByProject(self.project.id)
-
-        print()
-        for task in tasks:
-            status = ""
-            preColorSet = ""
-            postColorSet = ""
-
-            raw = "{num:>3}) {name:<38} [{status:<1}]"
-            if(task.status == Status.BACKLOG.value):
-                status = " "
-            elif(task.status == Status.IN_PROGRESS.value):
-                preColorSet = Back.BLUE
-                postColorSet = Back.RESET
-                status = "o"
-            elif(task.status == Status.DONE.value):
-                preColorSet = Fore.LIGHTBLACK_EX
-                postColorSet = Fore.RESET
-                status = "x"
-            elif(task.status == Status.TESTING.value):
-                preColorSet = Fore.MAGENTA
-                postColorSet = Fore.RESET
-                status = "T"
-
-            print(preColorSet + raw.format(
-                num=task.order,
-                name=task.name,
-                status=status
-            ), postColorSet)
-
-        print()
+        doneTasks = task_service.findAllTaskStatusForProject(
+            Status.DONE.value, self.project.id
+        )
+        backlogTasks = task_service.findAllTaskStatusForProject(
+            Status.BACKLOG.value, self.project.id)
+        currentTasks = task_service.findAllTaskStatusForProject(
+            Status.IN_PROGRESS.value, self.project.id)
+        if(args == None):
+            print()
+            for task in doneTasks:
+                Logger.task(task)
+            print()
+            for task in currentTasks:
+                Logger.task(task)
+            print()
+            for task in backlogTasks:
+                Logger.task(task)
+            print()
+            return
 
     def statusTaskCommand(self, args):
         task = task_service.getTaskByOrder(self.project.id, args[0])
@@ -100,7 +88,7 @@ class ProjectViewCLI(CLI):
             Logger.error("There is no task with that order")
             return
         status = None
-        if(args[1].lower() == "backlog"):
+        if(args[1].lower() in ("backlog", "todo")):
             status = Status.BACKLOG.value
         elif(args[1].lower() == "current"):
             currentTasks = task_service.findAllTaskStatusForProject(
@@ -118,6 +106,10 @@ class ProjectViewCLI(CLI):
         elif(args[1].lower() == "done"):
             status = Status.DONE.value
 
+        else:
+            Logger.error("There is no such status")
+            return
+
         update = task_service.updateTask(task, status=status)
         if(update):
             Logger.info("Task Name: {name}".format(
@@ -130,19 +122,19 @@ class ProjectViewCLI(CLI):
         inProgress = task_service.findAllTaskStatusForProject(
             Status.IN_PROGRESS.value, self.project.id)
 
+        backlogTasks = task_service.findAllTaskStatusForProject(
+            Status.BACKLOG.value, self.project.id)
+
+        if(len(backlogTasks) == 0):
+            Logger.error("There are no remaining tasks")
+            return
+
+        firstTask = backlogTasks[0]
+
         # If there are no tasks in progress
         if(len(inProgress) == 0):
-            backlogTasks = task_service.findAllTaskStatusForProject(
-                Status.BACKLOG.value, self.project.id)
-
-            if(len(backlogTasks) == 0):
-                Logger.error("There are no remaining tasks")
-                return
-
-            firstTask = backlogTasks[0]
 
             task_service.updateTask(firstTask, status=Status.IN_PROGRESS.value)
-
             Logger.info("Task Name: {name}".format(
                 name=firstTask.name))
             Logger.success("Task status is set to {status}!".format(
@@ -152,9 +144,6 @@ class ProjectViewCLI(CLI):
 
         currentTask = inProgress[0]
 
-        nextTask = task_service.getTaskByOrder(
-            self.project.id, currentTask.order + 1)
-
         updateCurrentTask = task_service.updateTask(
             currentTask, status=Status.DONE.value)
 
@@ -162,10 +151,10 @@ class ProjectViewCLI(CLI):
             Logger.error("Cannot update currentTask")
             return
 
-        updateNextTask = task_service.updateTask(
-            nextTask, status=Status.IN_PROGRESS.value)
+        updateFirstTask = task_service.updateTask(
+            firstTask, status=Status.IN_PROGRESS.value)
 
-        if(updateNextTask == None):
+        if(updateFirstTask == None):
             Logger.error("Cannot update currentTask")
             return
 
@@ -174,7 +163,7 @@ class ProjectViewCLI(CLI):
         Logger.success("Task status is set to {status}!".format(
             status=Status.DONE.name))
         Logger.info("Next Task Name: {name}".format(
-            name=nextTask.name))
+            name=firstTask.name))
         Logger.success("Task status is set to {status}!".format(
             status=Status.IN_PROGRESS.name))
 

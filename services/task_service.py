@@ -10,7 +10,6 @@ def createTask(name, project):
         project=project,
         order=taskOrder
     )
-
     newTask.save()
     return newTask
 
@@ -19,23 +18,28 @@ def getAllTasks():
     return Task.select()
 
 
+def countProjectTasks(project):
+    tasks = Task.select().where(
+        Task.project == project.id
+    ).count()
+
+    return tasks
+
+
 def getOneTask(id):
     return Task.get_by_id(id)
 
 
 def getTaskByOrder(projectID, order):
     tasks = Task.select().where(
-        Task.project == projectID &
+        Task.project == projectID,
         Task.order == order
     )
 
     if(len(tasks) == 0):
         return None
 
-    return Task.select().where(
-        Task.project == projectID,
-        Task.order == order
-    )[0]
+    return tasks[0]
 
 
 def getTasksByProject(id):
@@ -44,12 +48,17 @@ def getTasksByProject(id):
     ).order_by(Task.order)
 
 
-def countProjectTasks(project):
-    tasks = Task.select().where(
-        Task.project == project.id
-    ).count()
+def findAllTaskStatus(status):
+    return Task.select().where(
+        Task.status == status
+    ).order_by(Task.order)
 
-    return tasks
+
+def findAllTaskStatusForProject(status, projectID):
+    return Task.select().where(
+        (Task.status == status) &
+        (Task.project == projectID)
+    ).order_by(Task.order)
 
 
 def updateTask(task, name=None, status=None):
@@ -76,19 +85,6 @@ def deleteTask(task):
 def deleteTasksForProject(id):
     query = Task.delete().where(Task.project == id)
     return query.execute()
-
-
-def findAllTaskStatus(status):
-    return Task.select().where(
-        Task.status == status
-    ).order_by(Task.order)
-
-
-def findAllTaskStatusForProject(status, projectID):
-    return Task.select().where(
-        (Task.status == status) &
-        (Task.project == projectID)
-    ).order_by(Task.order)
 
 
 def reassignOrder(projectID):
