@@ -1,9 +1,10 @@
 import re
+import humanize
 from datetime import datetime, timedelta
 
 
 regex = re.compile(
-    r'((?P<hours>\d+?)hr)?((?P<minutes>\d+?)m)?((?P<seconds>\d+?)s)?')
+    r'((?P<days>\d+?)d)?((?P<hours>\d+?)h)?((?P<minutes>\d+?)m)?((?P<seconds>\d+?)s)?')
 
 
 def parse_time(time_str):
@@ -23,7 +24,12 @@ def calculateDate(time_str):
     currentDate = datetime.now()
     addedTime = parse_time(time_str)
 
-    if(addedTime == None):
+    if (addedTime == None):
         return
 
     return currentDate + addedTime
+
+
+def convertDate(date):
+    delta = datetime.now() - date
+    return humanize.naturaltime(delta)

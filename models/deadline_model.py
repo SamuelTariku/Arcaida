@@ -4,7 +4,7 @@ from utils.config import database
 
 class Deadline(Model):
     name = CharField()
-    date = DateField()
+    date = DateTimeField()
 
     class Meta:
         database = database

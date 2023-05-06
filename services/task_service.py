@@ -36,7 +36,7 @@ def getTaskByOrder(projectID, order):
         Task.order == order
     )
 
-    if(len(tasks) == 0):
+    if (len(tasks) == 0):
         return None
 
     return tasks[0]
@@ -63,9 +63,9 @@ def findAllTaskStatusForProject(status, projectID):
 
 def updateTask(task, name=None, status=None):
 
-    if(name):
+    if (name):
         task.name = name
-    if(status):
+    if (status):
         task.status = status
 
     task.save()
@@ -119,13 +119,13 @@ def updateOrder(projectID, current, destination):
     movedTask.save()
 
     # Update all the records that are between the values
-    if(initial < final):
+    if (initial < final):
         query = Task.update(order=Task.order - 1).where(
             (Task.project == projectID) &
             (Task.order > initial) & (Task.order <= final)
         )
         query.execute()
-    elif(initial > final):
+    elif (initial > final):
         query = Task.update(order=Task.order + 1).where(
             (Task.order < initial) & (Task.order >= final)
         )

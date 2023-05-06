@@ -11,17 +11,24 @@ def createDeadline(name, date):
 
 
 def getAllDeadline():
-    return Deadline.select()
+    return Deadline.select().order_by(Deadline.date)
 
 
 def getOneDeadline(id):
     return Deadline.get_by_id(id)
 
 
-def updateDeadlineName(id, name):
+def updateDeadline(id, name=None, date=None):
     deadline = Deadline.get_by_id(id)
-    deadline.name = name
+
+    if (name):
+        deadline.name = name
+    if (date):
+        deadline.date = date
+
     deadline.save()
+
+    return deadline
 
 
 def deleteAllDeadline():

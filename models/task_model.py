@@ -17,7 +17,7 @@ class Task(Model):
     status = IntegerField(default=1)
     project = ForeignKeyField(Project, backref="tasks")
     order = IntegerField(null=True)
-    deadline = ForeignKeyField(Deadline, backref="tasks")
+    deadline = ForeignKeyField(Deadline, null=True, backref="tasks")
 
     class Meta:
         database = database
