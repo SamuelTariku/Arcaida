@@ -15,7 +15,10 @@ def getAllDeadline():
 
 
 def getOneDeadline(id):
-    return Deadline.get_by_id(id)
+    try:
+        return Deadline.get_by_id(id)
+    except:
+        return None
 
 
 def updateDeadline(id, name=None, date=None):

@@ -1,8 +1,9 @@
 from utils.simple_cli import *
 from utils.log import Logger
-from services import task_service
+from utils.deltaParser import calculateDate, convertDate
+from services import task_service, deadline_service
 from models.task_model import Status
-from colorama import Fore, Back
+# from colorama import Fore, Back
 
 
 class ProjectViewCLI(CLI):
@@ -14,6 +15,7 @@ class ProjectViewCLI(CLI):
         self.prompt = "#Project {}".format(project.name)
         self.commands = self.generateCommandDict([
             Command("create", self.createTaskCommand, 1),
+            Command("deadline", self.assignDeadlineCommand, 1),
             Command("bulk-create", self.bulkCreateTaskCommand),
             Command("view", self.viewTaskCommand),
             Command("status", self.statusTaskCommand, 2),
@@ -212,3 +214,42 @@ class ProjectViewCLI(CLI):
         if(reorder):
             Logger.success("Task has been moved!")
             self.viewTaskCommand()
+
+    def assignDeadlineCommand(self, args):
+        # deadline 2 4 5 2
+        tasks = task_service.getManyTask(self.project.id, args)
+
+        if(len(tasks) == 0):
+            Logger.error("There is no task with that order")
+            return
+        # show deadlines viewer
+        deadlines = deadline_service.getAllDeadline()
+
+        print()
+        for deadline in deadlines:
+            print("{id:>3}) {name:<38} {date}".format(
+                id=deadline.id,
+                name=deadline.name,
+                date=convertDate(deadline.date)
+            ))
+        print()
+
+        deadlineID = input("select>")
+
+        if(not deadlineID.isnumeric()):
+            print("deadline id incorrect!")
+            return
+        
+        selectedDeadline = deadline_service.getOneDeadline(deadlineID)
+
+        if(selectedDeadline == None):
+            Logger.error("There is no deadline with that id")
+            return
+        
+        print("deadline", selectedDeadline.name)
+        # assign deadline to all passed tasks
+        for task in tasks:
+            task.deadline = selectedDeadline
+            task.save()
+            
+        

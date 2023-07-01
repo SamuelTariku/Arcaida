@@ -29,6 +29,13 @@ def countProjectTasks(project):
 def getOneTask(id):
     return Task.get_by_id(id)
 
+def getManyTask(projectID, idList):
+    tasks = Task.select().where(
+        Task.project == projectID,
+        Task.order << idList
+    )
+
+    return tasks
 
 def getTaskByOrder(projectID, order):
     tasks = Task.select().where(
