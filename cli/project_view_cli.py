@@ -225,6 +225,9 @@ class ProjectViewCLI(CLI):
         # show deadlines viewer
         deadlines = deadline_service.getAllDeadline()
 
+        if(len(deadlines) == 0):
+            Logger.error("No deadlines created!")
+            return
         print()
         for deadline in deadlines:
             print("{id:>3}) {name:<38} {date}".format(
@@ -237,7 +240,7 @@ class ProjectViewCLI(CLI):
         deadlineID = input("select>")
 
         if(not deadlineID.isnumeric()):
-            print("deadline id incorrect!")
+            Logger.error("deadline id incorrect!")
             return
         
         selectedDeadline = deadline_service.getOneDeadline(deadlineID)
@@ -246,7 +249,7 @@ class ProjectViewCLI(CLI):
             Logger.error("There is no deadline with that id")
             return
         
-        print("deadline", selectedDeadline.name)
+        Logger.info("deadline " + selectedDeadline.name)
         # assign deadline to all passed tasks
         for task in tasks:
             task.deadline = selectedDeadline
