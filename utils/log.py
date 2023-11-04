@@ -10,10 +10,10 @@ class Logger:
         print(Fore.RED + "[!]", text, Fore.RESET)
 
     def warn(text):
-        print(Fore.YELLOW + "[-]", text, Fore.RESET)
+        print(Fore.YELLOW + "[?]", text, Fore.RESET)
 
     def info(text):
-        print(Fore.BLUE + "[*]", text, Fore.RESET)
+        print(Fore.BLUE + "[-]", text, Fore.RESET)
 
     def task(task):
         status = ""
@@ -39,4 +39,19 @@ class Logger:
             num=task.order,
             name=task.name,
             status=status
+        ), postColorSet)
+    
+    def project(project, complete):
+        preColorSet = ""
+        postColorSet = ""
+        raw = "{num:>3}) {name:<38} {complete:.0%}"
+        
+        if(not project.active):
+            preColorSet = Fore.LIGHTBLACK_EX
+            postColorSet = Fore.RESET
+        
+        print(preColorSet + raw.format(
+            num=project.id,
+            name=project.name,
+            complete=complete
         ), postColorSet)

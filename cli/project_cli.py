@@ -1,5 +1,5 @@
 from utils.simple_cli import *
-from services import project_service
+from services import project_service, task_service
 from utils.log import Logger
 from colorama import Fore
 from cli.project_view_cli import ProjectViewCLI
@@ -16,7 +16,10 @@ class ProjectCLI(CLI):
             Command("rename", self.renameProjectCommand, 2),
             Command("clear", self.clearAllProjectCommand),
             Command("remove", self.removeProjectCommand, 1),
-            Command("open", self.openProjectCommand, 1)
+            Command("open", self.openProjectCommand, 1),
+            Command("open", self.openProjectCommand, 1),
+            Command("active", self.activeProjectCommand, 1),
+            Command("inactive", self.inactiveProjectCommand, 1),
         ])
 
     def createProjectCommand(self, args):
@@ -28,23 +31,27 @@ class ProjectCLI(CLI):
     # TODO: add filters
     def viewAllProjectCommand(self, args=None):
         projects = project_service.getAllProject()
+        
         print()
         for project in projects:
-            print("{id:>3}) {name:<38}".format(
-                id=project.id,
-                name=project.name
-            ))
+            complete = task_service.getCompletionForProject(project.id)
+            Logger.project(project, complete)
         print()
 
     def renameProjectCommand(self, args):
-        update = project_service.updateProjectName(
-            args[0],
-            " ".join(args[1::])
-        )
-        if(update):
-            Logger.info("Project Name: {name}".format(
-                name=" ".join(args[1::])))
-            Logger.success("Project name is updated!")
+        try:
+            update = project_service.updateProjectName(
+                args[0],
+                " ".join(args[1::])
+            )
+            
+            if(update):
+                Logger.success("Project {name} is updated!".format(
+                        name=update.name))
+        except Exception as err:
+            Logger.error("Cannot update project!")
+            print(err)
+        
 
     def clearAllProjectCommand(self, args=None):
         clear = project_service.deleteAllProject()
@@ -74,3 +81,23 @@ class ProjectCLI(CLI):
             self.close()
 
         return close
+    
+    def activeProjectCommand(self, args):
+        for arg in args:
+            try:
+                update = project_service.updateProjectStatus(arg, True)
+                if(update):
+                    Logger.success("Project {name} is set to active!".format(
+                        name=update.name))
+            except:
+                Logger.error("Cannot update project " + arg)
+            
+    def inactiveProjectCommand(self, args):
+        for arg in args:
+            try:
+                update = project_service.updateProjectStatus(arg, False)
+                if(update):
+                    Logger.success("Project {name} is set to inactive!".format(
+                        name=update.name))
+            except:
+                Logger.error("Cannot update project " + arg)

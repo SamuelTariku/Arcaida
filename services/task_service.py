@@ -1,4 +1,4 @@
-from models.task_model import Task
+from models.task_model import Task, Status
 from utils.config import database
 
 
@@ -54,6 +54,20 @@ def getTasksByProject(id):
         Task.project == id
     ).order_by(Task.order)
 
+def getCompletionForProject(projectID):
+    total_tasks = Task.select().where(
+        Task.project == projectID
+    ).count()
+    
+    if(total_tasks == 0):
+        return 0
+    
+    complete_tasks = Task.select().where(
+        (Task.status == Status.DONE.value) &
+        (Task.project == projectID)
+    ).count()
+    
+    return complete_tasks / total_tasks
 
 def findAllTaskStatus(status):
     return Task.select().where(
@@ -67,6 +81,12 @@ def findAllTaskStatusForProject(status, projectID):
         (Task.project == projectID)
     ).order_by(Task.order)
 
+def findActiveTaskForProject(projectID):
+    return Task.select().where(
+        (Task.status == Status.IN_PROGRESS) &
+        (Task.project == projectID)
+    )
+
 
 def updateTask(task, name=None, status=None):
 
@@ -74,7 +94,6 @@ def updateTask(task, name=None, status=None):
         task.name = name
     if (status):
         task.status = status
-
     task.save()
 
     return task

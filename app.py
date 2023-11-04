@@ -10,32 +10,11 @@ init()
 
 
 # Generate header text
+print(Fore.CYAN, end="")
 print("-" * 50)
-print(Fore.YELLOW)
-print(r"""
-\\|//   \\|///  \\\|//\\\|/// \|///  \\\|//
-\ |     \ |/       | / \ | /  \|/_      |/
-   \      Y       \|    \|/    \(_)_   \|
-  @@@@  (___)   _ `|/    Y    (_)@(_)  @@@@
- @@()@@ ^^^^^ _(_)/_   (___)    (_)   @@()@@
-  @@@@       (_)@(_)   ^^^^^           @@@@
-               (_)                        
-""")
-print(Fore.CYAN)
 tprint("Arcadia")
-print(Fore.YELLOW)
-
-print(r"""
-              _(_)_                        
-  @@@@       (_)@(_)   vVVVv     _     @@@@
- @@()@@ wWWWw  (_)\    (___)   _(_)_  @@()@@
-  @@@@  (___)     `|/    Y    (_)@(_)  @@@@
-   /      Y       \|    \|/    /(_)    \|
-\ |     \ |/       | / \ | /  \|/       |/
-\\|//   \\|///  \\\|//\\\|/// \|///  \\\|//
-""")
-print(Fore.RESET)
 print("-" * 50)
+print(Fore.RESET, end="")
 
 # connect to the database
 Logger.info("connecting to database...")
