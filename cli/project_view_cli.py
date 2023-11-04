@@ -1,7 +1,7 @@
 from utils.simple_cli import *
 from utils.log import Logger
 from utils.deltaParser import calculateDate, convertDate
-from services import task_service, deadline_service
+from services import task_service, deadline_service, project_service
 from models.task_model import Status
 # from colorama import Fore, Back
 
@@ -19,13 +19,14 @@ class ProjectViewCLI(CLI):
             Command("bulk-create", self.bulkCreateTaskCommand),
             Command("view", self.viewTaskCommand),
             Command("status", self.statusTaskCommand, 2),
-            Command("status-next", self.statusNextTaskCommand),
             Command("rename", self.renameTaskCommand, 2),
             Command("clear", self.clearAllTaskCommand),
             Command("remove", self.removeTaskCommand, 1),
             Command("reorder", self.reorderTaskCommand, 1),
 
         ])
+        
+        self.viewTaskCommand()
 
     def createTaskCommand(self, args):
         newTask = task_service.createTask(" ".join(args), self.project)
@@ -93,20 +94,35 @@ class ProjectViewCLI(CLI):
         if(args[1].lower() in ("backlog", "todo")):
             status = Status.BACKLOG.value
         elif(args[1].lower() == "current"):
-            currentTasks = task_service.findAllTaskStatusForProject(
-                Status.IN_PROGRESS.value, self.project.id)
-
+            
+            currentTasks = task_service.findAllTaskStatus(
+                Status.IN_PROGRESS.value)
+            
             if(len(currentTasks) >= 1):
-                Logger.error("There can only be one IN-PROGRESS task")
-                return
-
+                Logger.info("There can only be one IN-PROGRESS task")
+                replace = input("replace? (y/N)>")
+                
+                if(replace.lower() == "y"):
+                    # just in case idk
+                    for currentTask in currentTasks:
+                        task_service.updateTask(currentTask, status=Status.BACKLOG.value)
+                else:
+                    return
+            
+            if(not task.project.active):
+                Logger.info("Set project to active...")
+                project_service.updateProjectStatus(task.project.id, True)
+                Logger.success("Project is active!")
+                
             status = Status.IN_PROGRESS.value
 
         elif(args[1].lower() == "test"):
             status = Status.TESTING.value
 
         elif(args[1].lower() == "done"):
+            # TODO: when all tasks are done set to inactive
             status = Status.DONE.value
+            
 
         else:
             Logger.error("There is no such status")
@@ -119,55 +135,55 @@ class ProjectViewCLI(CLI):
             Logger.success("Task status is set to {status}!".format(
                 status=Status(status).name))
 
-    def statusNextTaskCommand(self, args=None):
+    # def statusNextTaskCommand(self, args=None):
 
-        inProgress = task_service.findAllTaskStatusForProject(
-            Status.IN_PROGRESS.value, self.project.id)
+    #     inProgress = task_service.findAllTaskStatusForProject(
+    #         Status.IN_PROGRESS.value, self.project.id)
 
-        backlogTasks = task_service.findAllTaskStatusForProject(
-            Status.BACKLOG.value, self.project.id)
+    #     backlogTasks = task_service.findAllTaskStatusForProject(
+    #         Status.BACKLOG.value, self.project.id)
 
-        if(len(backlogTasks) == 0):
-            Logger.error("There are no remaining tasks")
-            return
+    #     if(len(backlogTasks) == 0):
+    #         Logger.error("There are no remaining tasks")
+    #         return
 
-        firstTask = backlogTasks[0]
+    #     firstTask = backlogTasks[0]
 
-        # If there are no tasks in progress
-        if(len(inProgress) == 0):
+    #     # If there are no tasks in progress
+    #     if(len(inProgress) == 0):
 
-            task_service.updateTask(firstTask, status=Status.IN_PROGRESS.value)
-            Logger.info("Task Name: {name}".format(
-                name=firstTask.name))
-            Logger.success("Task status is set to {status}!".format(
-                status=Status.IN_PROGRESS.name))
+    #         task_service.updateTask(firstTask, status=Status.IN_PROGRESS.value)
+    #         Logger.info("Task Name: {name}".format(
+    #             name=firstTask.name))
+    #         Logger.success("Task status is set to {status}!".format(
+    #             status=Status.IN_PROGRESS.name))
 
-            return
+    #         return
 
-        currentTask = inProgress[0]
+    #     currentTask = inProgress[0]
 
-        updateCurrentTask = task_service.updateTask(
-            currentTask, status=Status.DONE.value)
+    #     updateCurrentTask = task_service.updateTask(
+    #         currentTask, status=Status.DONE.value)
 
-        if(updateCurrentTask == None):
-            Logger.error("Cannot update currentTask")
-            return
+    #     if(updateCurrentTask == None):
+    #         Logger.error("Cannot update currentTask")
+    #         return
 
-        updateFirstTask = task_service.updateTask(
-            firstTask, status=Status.IN_PROGRESS.value)
+    #     updateFirstTask = task_service.updateTask(
+    #         firstTask, status=Status.IN_PROGRESS.value)
 
-        if(updateFirstTask == None):
-            Logger.error("Cannot update currentTask")
-            return
+    #     if(updateFirstTask == None):
+    #         Logger.error("Cannot update currentTask")
+    #         return
 
-        Logger.info("IN-PROGRESS Task Name: {name}".format(
-            name=currentTask.name))
-        Logger.success("Task status is set to {status}!".format(
-            status=Status.DONE.name))
-        Logger.info("Next Task Name: {name}".format(
-            name=firstTask.name))
-        Logger.success("Task status is set to {status}!".format(
-            status=Status.IN_PROGRESS.name))
+    #     Logger.info("IN-PROGRESS Task Name: {name}".format(
+    #         name=currentTask.name))
+    #     Logger.success("Task status is set to {status}!".format(
+    #         status=Status.DONE.name))
+    #     Logger.info("Next Task Name: {name}".format(
+    #         name=firstTask.name))
+    #     Logger.success("Task status is set to {status}!".format(
+    #         status=Status.IN_PROGRESS.name))
 
     def renameTaskCommand(self, args):
         task = task_service.getTaskByOrder(self.project.id, args[0])

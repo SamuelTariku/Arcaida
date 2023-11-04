@@ -21,6 +21,8 @@ class ProjectCLI(CLI):
             Command("active", self.activeProjectCommand, 1),
             Command("inactive", self.inactiveProjectCommand, 1),
         ])
+        
+        self.viewAllProjectCommand()
 
     def createProjectCommand(self, args):
         newProject = project_service.createProject(" ".join(args))

@@ -41,17 +41,33 @@ class Logger:
             status=status
         ), postColorSet)
     
-    def project(project, complete):
+    def project(project, complete, highlight=False):
         preColorSet = ""
         postColorSet = ""
-        raw = "{num:>3}) {name:<38} {complete:.0%}"
         
+        preProgressSet = ""
+        postProgressSet  = ""
+        
+        preBarSet = ""
+        postBarSet  = ""
+        # TODO: Validation for project name set max to 12 chars
         if(not project.active):
             preColorSet = Fore.LIGHTBLACK_EX
             postColorSet = Fore.RESET
-        
+            
+        if(highlight):
+            preColorSet = Fore.BLUE
+            postColorSet = Fore.RESET
+            
+            preBarSet = Back.BLUE
+            postBarSet = Back.RESET
+            
+        raw = "{num:>3}) {name:<12} |{progress:<30}| {complete:.0%}"
+         
         print(preColorSet + raw.format(
             num=project.id,
             name=project.name,
-            complete=complete
+            complete=complete,
+            progress="|" * round(30 * complete),
+            
         ), postColorSet)
