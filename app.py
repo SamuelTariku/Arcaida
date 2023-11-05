@@ -11,9 +11,9 @@ init()
 
 # Generate header text
 print(Fore.CYAN, end="")
-print("-" * 50)
+print("-" * 58)
 tprint("Arcadia")
-print("-" * 50)
+print("-" * 58)
 print(Fore.RESET, end="")
 
 # connect to the database

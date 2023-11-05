@@ -18,7 +18,9 @@ class Task(Model):
     project = ForeignKeyField(Project, backref="tasks")
     order = IntegerField(null=True)
     deadline = ForeignKeyField(Deadline, null=True, backref="tasks")
-
+    startDate = DateTimeField(null=True)
+    endDate = DateTimeField(null=True)
+    
     class Meta:
         database = database
         # indexes = (

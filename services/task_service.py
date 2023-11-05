@@ -1,6 +1,6 @@
 from models.task_model import Task, Status
 from utils.config import database
-
+import datetime
 
 def createTask(name, project):
     taskOrder = getTasksByProject(project.id).count() + 1
@@ -88,12 +88,23 @@ def findActiveTaskForProject(projectID):
     )
 
 
-def updateTask(task, name=None, status=None):
-
-    if (name):
-        task.name = name
-    if (status):
-        task.status = status
+def updateStatus(task, status):
+    
+    # Task is given a start date when its set to IN-PROGRESS
+    # end date is assigned when its set to DONE
+    if(status == Status.IN_PROGRESS.value):
+        task.startDate = datetime.datetime.utcnow()
+    elif(status == Status.BACKLOG.value):
+        task.startDate = None
+        task.endDate = None
+    elif(status == Status.DONE.value):
+        if(not task.startDate):
+            task.startDate = datetime.datetime.utcnow()
+        task.endDate = datetime.datetime.utcnow()
+    
+    # TODO: Add validation to restrict only one IN-PROGRESS TASK
+    task.status = status
+    
     task.save()
 
     return task

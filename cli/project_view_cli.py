@@ -12,7 +12,7 @@ class ProjectViewCLI(CLI):
         super().__init__()
 
         self.project = project
-        self.prompt = "#Project {}".format(project.name)
+        self.prompt = "~Project {}".format(project.name)
         self.commands = self.generateCommandDict([
             Command("create", self.createTaskCommand, 1),
             Command("deadline", self.assignDeadlineCommand, 1),
@@ -75,14 +75,11 @@ class ProjectViewCLI(CLI):
             print()
             for task in doneTasks:
                 Logger.task(task)
-            print()
             for task in currentTasks:
                 Logger.task(task)
-            print()
             for task in backlogTasks:
                 Logger.task(task)
             print()
-            return
 
     def statusTaskCommand(self, args):
         task = task_service.getTaskByOrder(self.project.id, args[0])
@@ -98,6 +95,7 @@ class ProjectViewCLI(CLI):
             currentTasks = task_service.findAllTaskStatus(
                 Status.IN_PROGRESS.value)
             
+            # Set IN-PROGRESS task to BACKLOG
             if(len(currentTasks) >= 1):
                 Logger.info("There can only be one IN-PROGRESS task")
                 replace = input("replace? (y/N)>")
@@ -105,10 +103,10 @@ class ProjectViewCLI(CLI):
                 if(replace.lower() == "y"):
                     # just in case idk
                     for currentTask in currentTasks:
-                        task_service.updateTask(currentTask, status=Status.BACKLOG.value)
+                        task_service.updateStatus(currentTask, Status.BACKLOG.value)
                 else:
                     return
-            
+            # Set the project to active
             if(not task.project.active):
                 Logger.info("Set project to active...")
                 project_service.updateProjectStatus(task.project.id, True)
@@ -121,14 +119,23 @@ class ProjectViewCLI(CLI):
 
         elif(args[1].lower() == "done"):
             # TODO: when all tasks are done set to inactive
-            status = Status.DONE.value
             
+            
+            todoTasks = task_service.findAllTaskStatusForProject(Status.BACKLOG.value, task.project.id)
+            
+            if(todoTasks.count() == 0):
+                Logger.success("All tasks in project completed!")
+                Logger.info("Setting project to inactive...")
+                project_service.updateProjectStatus(task.project.id, False)
+                Logger.success("Project set to inactive!")
+            
+            status = Status.DONE.value
 
         else:
             Logger.error("There is no such status")
             return
 
-        update = task_service.updateTask(task, status=status)
+        update = task_service.updateStatus(task, status)
         if(update):
             Logger.info("Task Name: {name}".format(
                 name=task.name))
@@ -190,12 +197,12 @@ class ProjectViewCLI(CLI):
         if(task == None):
             Logger.error("There is no task with that order")
             return
-        update = task_service.updateTask(task, name=" ".join(args[1::]))
+        task.name = " ".join(args[1::])
+        task.save()
 
-        if(update):
-            Logger.info("Task Name: {name}".format(
-                name=" ".join(args[1::])))
-            Logger.success("Task name is updated!")
+        Logger.info("Task Name: {name}".format(name=" ".join(args[1::])))
+        Logger.success("Task name is updated!")
+            
 
     def clearAllTaskCommand(self, args=None):
         clear = task_service.deleteTasksForProject(self.project.id)
