@@ -2,6 +2,8 @@ from models.task_model import Task, Status
 from utils.config import database
 import datetime
 
+from peewee import fn
+
 def createTask(name, project):
     taskOrder = getTasksByProject(project.id).count() + 1
 
@@ -69,17 +71,30 @@ def getCompletionForProject(projectID):
     
     return complete_tasks / total_tasks
 
-def findAllTaskStatus(status):
+def findAllTaskStatus(status, random=False):
+    
+    orderBy = Task.order
+    
+    if(random):
+        orderBy = fn.Random()
+    
+    
     return Task.select().where(
         Task.status == status
-    ).order_by(Task.order)
+    ).order_by(orderBy)
 
 
-def findAllTaskStatusForProject(status, projectID):
+def findAllTaskStatusForProject(status, projectID, random=False):
+    
+    orderBy = Task.order
+    
+    if(random):
+        orderBy = fn.Random()
+    
     return Task.select().where(
         (Task.status == status) &
         (Task.project == projectID)
-    ).order_by(Task.order)
+    ).order_by(orderBy)
 
 def findActiveTaskForProject(projectID):
     return Task.select().where(
@@ -106,6 +121,8 @@ def updateStatus(task, status):
     task.status = status
     
     task.save()
+    
+    reassignOrder(task.project.id)
 
     return task
 
@@ -125,14 +142,17 @@ def deleteTasksForProject(id):
 
 
 def reassignOrder(projectID):
+    
+    # Reorders the tasks based on the status given
+    # Todo's are last 
     database.execute_sql(
         """
         update task
         set "order" = (
 	        select (
-		        select count(*) 
-		        from task b 
-		        where a.id >= b.id and project_id == {projectID}
+		       	select count(*)
+				from task b
+				where project_id=={projectID} and ((a.status == b.status and a.id >= b.id) or (a.status > b.status)) 
 	        ) as num 
 	        from task a 
 	        where project_id == {projectID} and task.id == a.id

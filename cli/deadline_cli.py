@@ -27,7 +27,7 @@ class DeadlineCLI(CLI):
             Logger.info("Deadline Name: {name}".format(name=newDeadline.name))
             Logger.success("Deadline is created!")
 
-    def viewDeadlineCommand(self, args=None):
+    def viewDeadlineCommand(self, args=[]):
 
         deadlines = deadline_service.getAllDeadline()
 
@@ -61,7 +61,7 @@ class DeadlineCLI(CLI):
                 date=convertDate(deadlineDate)))
             Logger.success("Deadline Date is updated!")
 
-    def clearDeadlineCommand(self, args=None):
+    def clearDeadlineCommand(self, args=[]):
         clear = deadline_service.deleteAllDeadline()
 
         if (clear):

@@ -31,7 +31,7 @@ class ProjectCLI(CLI):
             Logger.success("Project is created!")
 
     # TODO: add filters
-    def viewAllProjectCommand(self, args=None):
+    def viewAllProjectCommand(self, args=[]):
         projects = project_service.getAllProject()
         
         print()
@@ -55,7 +55,7 @@ class ProjectCLI(CLI):
             print(err)
         
 
-    def clearAllProjectCommand(self, args=None):
+    def clearAllProjectCommand(self, args=[]):
         clear = project_service.deleteAllProject()
         if(clear):
             Logger.info("Number of projects deleted: {num}".format(

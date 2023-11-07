@@ -2,8 +2,10 @@ from colorama import Fore, Back
 from models.task_model import Status
 import datetime
 import humanize
+from art import tprint
 class Logger:
-
+    def celebrate(text):
+        tprint(text, font="fuzzy")
     def success(text):
         print(Fore.GREEN + "[+]", text, Fore.RESET)
 
@@ -14,7 +16,7 @@ class Logger:
         print(Fore.YELLOW + "[?]", text, Fore.RESET)
 
     def info(text):
-        print(Fore.BLUE + "[-]", text, Fore.RESET)
+        print(Fore.BLUE + "[.]", text, Fore.RESET)
 
     def task(task, noHighlight=False, noOrder=False):
         days = ""

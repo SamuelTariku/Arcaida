@@ -22,7 +22,7 @@ class ProjectViewCLI(CLI):
             Command("rename", self.renameTaskCommand, 2),
             Command("clear", self.clearAllTaskCommand),
             Command("remove", self.removeTaskCommand, 1),
-            Command("reorder", self.reorderTaskCommand, 1),
+            Command("reorder", self.reorderTaskCommand),
 
         ])
         
@@ -35,7 +35,7 @@ class ProjectViewCLI(CLI):
             Logger.info("Task Name: {name}".format(name=newTask.name))
             Logger.success("Task is created!")
 
-    def bulkCreateTaskCommand(self, args=None):
+    def bulkCreateTaskCommand(self, args=[]):
         run = True
         Logger.warn("\"wq\" -- save and exit")
         Logger.warn("\"q\"  -- exit without saving")
@@ -63,7 +63,7 @@ class ProjectViewCLI(CLI):
         if(created != 0):
             Logger.success("Tasks have been created!")
 
-    def viewTaskCommand(self, args=None):
+    def viewTaskCommand(self, args=[]):
         doneTasks = task_service.findAllTaskStatusForProject(
             Status.DONE.value, self.project.id
         )
@@ -71,14 +71,16 @@ class ProjectViewCLI(CLI):
             Status.BACKLOG.value, self.project.id)
         currentTasks = task_service.findAllTaskStatusForProject(
             Status.IN_PROGRESS.value, self.project.id)
-        if(args == None):
+        if(args == []):
             print()
-            for task in doneTasks:
+            
+            for task in backlogTasks:
                 Logger.task(task)
             for task in currentTasks:
                 Logger.task(task)
-            for task in backlogTasks:
+            for task in doneTasks:
                 Logger.task(task)
+                
             print()
 
     def statusTaskCommand(self, args):
@@ -123,7 +125,13 @@ class ProjectViewCLI(CLI):
             
             todoTasks = task_service.findAllTaskStatusForProject(Status.BACKLOG.value, task.project.id)
             
-            if(todoTasks.count() == 0):
+            
+            if(task.status == Status.BACKLOG.value):
+                todoTasksCount = todoTasks.count() - 1
+            else:
+                todoTasksCount = todoTasks.count()
+        
+            if(todoTasksCount == 0):
                 Logger.success("All tasks in project completed!")
                 Logger.info("Setting project to inactive...")
                 project_service.updateProjectStatus(task.project.id, False)
@@ -142,7 +150,7 @@ class ProjectViewCLI(CLI):
             Logger.success("Task status is set to {status}!".format(
                 status=Status(status).name))
 
-    # def statusNextTaskCommand(self, args=None):
+    # def statusNextTaskCommand(self, args=[]):
 
     #     inProgress = task_service.findAllTaskStatusForProject(
     #         Status.IN_PROGRESS.value, self.project.id)
@@ -204,7 +212,7 @@ class ProjectViewCLI(CLI):
         Logger.success("Task name is updated!")
             
 
-    def clearAllTaskCommand(self, args=None):
+    def clearAllTaskCommand(self, args=[]):
         clear = task_service.deleteTasksForProject(self.project.id)
 
         if(clear):
@@ -226,17 +234,10 @@ class ProjectViewCLI(CLI):
             ))
             Logger.success("Task has been deleted!")
 
-    def reorderTaskCommand(self, args):
-
-        if(args[0] == "all"):
-            task_service.reassignOrder(self.project.id)
-            Logger.success("Tasks have been reordered")
-            return
-
-        reorder = task_service.updateOrder(self.project.id, args[0], args[1])
-        if(reorder):
-            Logger.success("Task has been moved!")
-            self.viewTaskCommand()
+    def reorderTaskCommand(self, args=[]):
+        task_service.reassignOrder(self.project.id)
+        Logger.success("Tasks have been reordered")
+        self.viewTaskCommand()
 
     def assignDeadlineCommand(self, args):
         # deadline 2 4 5 2

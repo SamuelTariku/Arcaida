@@ -49,23 +49,27 @@ class CLI:
             Logger.error("Not enough arguments! Check documentation")
             print(argList)
             return
-
-        if(command.count == 0):
-            exitValue = command.function()
-        else:
-            exitValue = command.function(argList[1::])
+        
+        
+        # All command functions need to take an argument
+        exitValue = command.function(argList[1::])
+        
+        # if(command.count == 0):
+        #     exitValue = command.function()
+        # else:
+        #     exitValue = command.function(argList[1::])
 
         return exitValue
 
-    def close(self):
+    def close(self, args=[]):
         self.running = False
         return True
 
-    def back(self):
+    def back(self, args=[]):
         self.running = False
         return False
 
-    def helpText(self):
+    def helpText(self, args=[]):
         print()
         print(" Command List \n", "_" * 30)
         for command in self.commands.keys():

@@ -1,4 +1,5 @@
 from models.project_model import Project
+from peewee import fn
 
 def createProject(name):
     newProject = Project.create(
@@ -16,10 +17,16 @@ def getAllProject():
 def getOneProject(id):
     return Project.get_by_id(id)
 
-def getActiveProjects():
+def getActiveProjects(random=False):
+    
+    orderBy = Project.id
+    
+    if(random):
+        orderBy = fn.Random()
+    
     return Project.select().where(
         Project.active == True
-    )
+    ).order_by(orderBy)
     
 # def updateProjectName(id, name):
 #     query = Project.update(
