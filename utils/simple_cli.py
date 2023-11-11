@@ -70,6 +70,7 @@ class CLI:
         return False
 
     def helpText(self, args=[]):
+        # TODO: Make this better
         print()
         print(" Command List \n", "_" * 30)
         for command in self.commands.keys():

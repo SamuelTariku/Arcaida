@@ -1,4 +1,5 @@
 from models.task_model import Status
+from peewee import DoesNotExist
 from utils.simple_cli import *
 from cli.project_cli import ProjectCLI
 from cli.deadline_cli import DeadlineCLI
@@ -94,21 +95,22 @@ class BaseCLI(CLI):
             switch 
             
             Options:
-                default                 change project
-                -p  project             change project
-                -t  task                change task within current project
-                -rp random-project      change to random project
-                -rt random-task         change to random task within current project
-                -r random               change to random task within random project
+                default                     change project
+                -p | project                change project
+                -t | task                   change task within current project
+                -rp | random-project        change to random project
+                -rt | random-task           change to random task within current project
+                -r | random                 change to random task within random project
         """
         
         isCurrentProject = False
         isProjectRandom = False
         isTaskRandom = False
+        projectNumber = None
         
         if(len(args) != 0):
             if(args[0] in ("project", "-p")):
-                pass
+                projectNumber = args[1] if len(args) > 1 else None
             elif(args[0] in ("task", "-t")):
                 isCurrentProject = True
             elif(args[0] in ("random-project", "-rp")):
@@ -119,10 +121,12 @@ class BaseCLI(CLI):
             elif(args[0] in ("random", "-r")):
                 isTaskRandom = True
                 isProjectRandom = True
+            elif(args[0].isnumeric()):
+                projectNumber = int(args[0])
             else:
                 Logger.error("Unknown {}: please check documentation".format(args[0]))
+                return
         
-        print(isCurrentProject, isProjectRandom, isTaskRandom)
         activeProjects  = project_service.getActiveProjects(random=isProjectRandom)
         
         if(len(activeProjects) == 0):
@@ -130,25 +134,44 @@ class BaseCLI(CLI):
             print()
             return
         
-        currentTasksQuery = task_service.findAllTaskStatus(Status.IN_PROGRESS.value)
+        
         currentTask = None
-        if(len(currentTasksQuery) == 0):
-            nextProject = activeProjects[0]
+        
+        currentTasksQuery = task_service.findAllTaskStatus(Status.IN_PROGRESS.value)    
+        
+        # Get next project
+        if(projectNumber != None):
+            try:
+                nextProject = project_service.getOneProject(projectNumber)
+                if(not nextProject.active):
+                    Logger.error("Project is not active")
+                    return
+                if(len(currentTasksQuery) != 0):
+                    currentTask = currentTasksQuery[0]
+                    Logger.info("Setting Task '{}' to BACKLOG...".format(currentTask.name))
+                    currentTask = task_service.updateStatus(currentTask, Status.BACKLOG.value)
+                
+            except DoesNotExist:
+                Logger.error("No project with that id exists!")
+                return
         else:
-            currentTask = currentTasksQuery[0]
-            
-            # find the next project based on project id
-            if(not isCurrentProject):    
-                nextProjectList = list(filter(lambda x: x.id > currentTask.project.id, list(activeProjects)))
-                if(len(nextProjectList) == 0):
-                    nextProject = activeProjects[0]
-                else:
-                    nextProject = nextProjectList[0]
-                Logger.info("Switching project to '{}'".format(nextProject.name))
+            if(len(currentTasksQuery) == 0):
+                nextProject = activeProjects[0]
             else:
-                nextProject = currentTask.project
-            Logger.info("Setting Task '{}' to BACKLOG...".format(currentTask.name))
-            currentTask = task_service.updateStatus(currentTask, Status.BACKLOG.value)
+                currentTask = currentTasksQuery[0]
+                
+                # find the next project based on project id
+                if(not isCurrentProject):    
+                    nextProjectList = list(filter(lambda x: x.id > currentTask.project.id, list(activeProjects)))
+                    if(len(nextProjectList) == 0):
+                        nextProject = activeProjects[0]
+                    else:
+                        nextProject = nextProjectList[0]
+                    Logger.info("Switching project to '{}'".format(nextProject.name))
+                else:
+                    nextProject = currentTask.project
+                Logger.info("Setting Task '{}' to BACKLOG...".format(currentTask.name))
+                currentTask = task_service.updateStatus(currentTask, Status.BACKLOG.value)
         
         todoTasksQuery = task_service.findAllTaskStatusForProject(Status.BACKLOG.value, nextProject.id, random=isTaskRandom)
         

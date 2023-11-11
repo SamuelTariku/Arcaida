@@ -15,7 +15,7 @@ class Status(Enum):
 class Task(Model):
     name = CharField()
     status = IntegerField(default=1)
-    project = ForeignKeyField(Project, backref="tasks")
+    project = ForeignKeyField(Project, backref="tasks", on_delete='CASCADE')
     order = IntegerField(null=True)
     deadline = ForeignKeyField(Deadline, null=True, backref="tasks")
     startDate = DateTimeField(null=True)

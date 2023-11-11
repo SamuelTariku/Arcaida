@@ -87,6 +87,11 @@ class ProjectCLI(CLI):
     def activeProjectCommand(self, args):
         for arg in args:
             try:
+                complete = task_service.getCompletionForProject(arg)
+                if(complete == 1.0):
+                    Logger.error("Project {} is already complete!".format(arg))
+                    return
+                
                 update = project_service.updateProjectStatus(arg, True)
                 if(update):
                     Logger.success("Project {name} is set to active!".format(

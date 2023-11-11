@@ -12,4 +12,4 @@ DATABASE_PATH = configData["database_path"]
 
 
 # Setup Database
-database = SqliteDatabase(configData["database_path"])
+database = SqliteDatabase(configData["database_path"],pragmas={'foreign_keys': 1})
