@@ -92,6 +92,8 @@ class ProjectCLI(CLI):
                     Logger.error("Project {} is already complete!".format(arg))
                     return
                 
+                
+                
                 update = project_service.updateProjectStatus(arg, True)
                 if(update):
                     Logger.success("Project {name} is set to active!".format(

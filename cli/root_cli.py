@@ -16,7 +16,14 @@ class BaseCLI(CLI):
             Command("switch", self.switchCommand),
             Command("done", self.doneCommand),
             Command("edit", self.openDeadlinesCommand),
+            Command("check-inactive", self.checkInactiveCommand)
         ])
+        
+        
+        
+        
+        # make a project inactive if last task was done before a month
+        self.checkInactiveCommand()
         
         # show starting text
         print()
@@ -226,4 +233,27 @@ class BaseCLI(CLI):
         
         self.viewCommand()
         
+    def checkInactiveCommand(self, args=[]):
         
+        currentTaskQuery = task_service.findAllTaskStatus(Status.IN_PROGRESS.value)
+        
+        currentTask = None
+        if(len(currentTaskQuery) != 0):
+            currentTask = currentTaskQuery[0]
+            
+        activeProjects = project_service.getActiveProjects()
+        
+        for project in activeProjects:
+            if(currentTask != None):
+                if(currentTask.project.id == project.id):
+                    print("active current task")
+                    continue
+            
+            DoneTasks = task_service.findAllTaskStatusForProject(Status.DONE.value, project.id, order="endDate")
+            if(len(DoneTasks) == 0):
+                Logger.info("{} has no done tasks".format())
+                continue
+            
+            lastDoneTask = DoneTasks[0]
+            
+            print(lastDoneTask.name, lastDoneTask.endDate - lastDoneTask.startDate)

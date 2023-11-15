@@ -62,7 +62,7 @@ def getCompletionForProject(projectID):
     ).count()
     
     if(total_tasks == 0):
-        return 0
+        return 1.0
     
     complete_tasks = Task.select().where(
         (Task.status == Status.DONE.value) &
@@ -71,26 +71,32 @@ def getCompletionForProject(projectID):
     
     return complete_tasks / total_tasks
 
-def findAllTaskStatus(status, random=False):
+def findAllTaskStatus(status, order="default"):
     
-    orderBy = Task.order
-    
-    if(random):
+    if(order=="default"):
+        orderBy = Task.order
+    elif(order == "random"):
         orderBy = fn.Random()
-    
+    elif(order == "endDate"):
+        orderBy = Task.endDate
+    else:
+        raise Exception("Unknown Order Type")
     
     return Task.select().where(
         Task.status == status
     ).order_by(orderBy)
 
 
-def findAllTaskStatusForProject(status, projectID, random=False):
+def findAllTaskStatusForProject(status, projectID, order="default"):
     
-    orderBy = Task.order
-    
-    if(random):
+    if(order=="default"):
+        orderBy = Task.order
+    elif(order == "random"):
         orderBy = fn.Random()
-    
+    elif(order == "endDate"):
+        orderBy = Task.endDate
+    else:
+        raise Exception("Unknown Order Type")
     return Task.select().where(
         (Task.status == status) &
         (Task.project == projectID)
