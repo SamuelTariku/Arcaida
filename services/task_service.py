@@ -13,6 +13,8 @@ def createTask(name, project):
         order=taskOrder
     )
     newTask.save()
+    reassignOrder(project.id)
+    
     return newTask
 
 
@@ -71,36 +73,45 @@ def getCompletionForProject(projectID):
     
     return complete_tasks / total_tasks
 
-def findAllTaskStatus(status, order="default"):
+def getCompletionTime(id):
     
-    if(order=="default"):
-        orderBy = Task.order
-    elif(order == "random"):
-        orderBy = fn.Random()
-    elif(order == "endDate"):
-        orderBy = Task.endDate
-    else:
-        raise Exception("Unknown Order Type")
+    task = getOneTask(id)
+    
+    if(task.status != Status.DONE):
+        return None
+    
+    elapsed = task.endDate - task.startDate
+    
+    return elapsed
+
+
+def findAllTaskStatus(status, orderBy=Task.order, random=False, desc=False):
+    
+    order = orderBy
+    if(desc):
+        order = order.desc()
+    
+    if(random):
+        order = fn.Random()
     
     return Task.select().where(
         Task.status == status
-    ).order_by(orderBy)
+    ).order_by(order)
 
 
-def findAllTaskStatusForProject(status, projectID, order="default"):
+def findAllTaskStatusForProject(status, projectID, orderBy=Task.order, random=False, desc=False):
     
-    if(order=="default"):
-        orderBy = Task.order
-    elif(order == "random"):
-        orderBy = fn.Random()
-    elif(order == "endDate"):
-        orderBy = Task.endDate
-    else:
-        raise Exception("Unknown Order Type")
+    order = orderBy
+    if(desc):
+        order = order.desc()
+    
+    if(random):
+        order = fn.Random()
+    
     return Task.select().where(
         (Task.status == status) &
         (Task.project == projectID)
-    ).order_by(orderBy)
+    ).order_by(order)
 
 def findActiveTaskForProject(projectID):
     return Task.select().where(
@@ -114,14 +125,14 @@ def updateStatus(task, status):
     # Task is given a start date when its set to IN-PROGRESS
     # end date is assigned when its set to DONE
     if(status == Status.IN_PROGRESS.value):
-        task.startDate = datetime.datetime.utcnow()
+        task.startDate = datetime.datetime.now()
     elif(status == Status.BACKLOG.value):
         task.startDate = None
         task.endDate = None
     elif(status == Status.DONE.value):
         if(not task.startDate):
-            task.startDate = datetime.datetime.utcnow()
-        task.endDate = datetime.datetime.utcnow()
+            task.startDate = datetime.datetime.now()
+        task.endDate = datetime.datetime.now()
     
     # TODO: Add validation to restrict only one IN-PROGRESS TASK
     task.status = status

@@ -1,10 +1,13 @@
-from models.task_model import Status
+
+import datetime
+from models.task_model import Status, Task
 from peewee import DoesNotExist
+from utils.deltaParser import convertDate
 from utils.simple_cli import *
 from cli.project_cli import ProjectCLI
 from cli.deadline_cli import DeadlineCLI
 from services import project_service, task_service
-
+from utils.config import INACTIVE_DAYS
 class BaseCLI(CLI):
     def __init__(self) -> None:
         super().__init__()
@@ -16,20 +19,21 @@ class BaseCLI(CLI):
             Command("switch", self.switchCommand),
             Command("done", self.doneCommand),
             Command("edit", self.openDeadlinesCommand),
-            Command("check-inactive", self.checkInactiveCommand)
+            Command("check-inactive", self.checkInactiveCommand),
+            Command("streak", self.streakCommand),
+            Command("last-task", self.lastTaskCommand)
         ])
         
         
-        
-        
+        print()        
         # make a project inactive if last task was done before a month
         self.checkInactiveCommand()
         
         # show starting text
         print()
-        print("Last task done: 4 days ago")
-        
-        print("Current Streak: | Highest Streak: ")
+        self.lastTaskCommand()
+        print()
+        self.streakCommand()
         print()
         
         # TODO: the search for current task is done twice, replace with cli classes
@@ -203,16 +207,21 @@ class BaseCLI(CLI):
         
     
     def doneCommand(self, args=[]):
-        current = task_service.findAllTaskStatus(Status.IN_PROGRESS.value)
-        if(len(current) == 0):
+        currentTaskQuery = task_service.findAllTaskStatus(Status.IN_PROGRESS.value)
+        if(len(currentTaskQuery) == 0):
             Logger.error("No current task set!")
             return
         
-        todoTasksQuery = task_service.findAllTaskStatusForProject(Status.BACKLOG.value, current[0].project.id)
+        currentTask = currentTaskQuery[0]
         
-        Logger.info("Setting Task '{}' to DONE...".format(current[0].name))
-        task_service.updateStatus(current[0], Status.DONE.value)
+        todoTasksQuery = task_service.findAllTaskStatusForProject(Status.BACKLOG.value, currentTask.project.id)
         
+        print()
+        print("Completion Time: {}".format(convertDate(currentTask.startDate, verbose=False)))
+        print()
+        
+        Logger.info("Setting Task '{}' to DONE...".format(currentTask.name))
+        task_service.updateStatus(currentTask, Status.DONE.value)
         
         if(len(todoTasksQuery) == 0):
             print()
@@ -222,7 +231,7 @@ class BaseCLI(CLI):
             Logger.celebrate("Project")
             Logger.celebrate("Completed!")
             Logger.info("Setting project to inactive...")
-            project_service.updateProjectStatus(current[0].project.id, False)
+            project_service.updateProjectStatus(currentTask.project.id, False)
             Logger.success("Project set to inactive!")
             return
         
@@ -243,17 +252,93 @@ class BaseCLI(CLI):
             
         activeProjects = project_service.getActiveProjects()
         
+        inactiveCount = 0
+        
+        
         for project in activeProjects:
             if(currentTask != None):
                 if(currentTask.project.id == project.id):
-                    print("active current task")
+                    # Check how long the current task hasn't been completed
+                    elapsed = datetime.datetime.now() - currentTask.startDate
+                    if(elapsed > datetime.timedelta(days=INACTIVE_DAYS)):
+                        Logger.info("Project '{}' has not been updated for {} days".format(project.name, INACTIVE_DAYS))
+                        
+                        Logger.info("Setting Task '{}' to BACKLOG".format(currentTask.name))
+                        task_service.updateStatus(currentTask, Status.BACKLOG.value)
+                        
+                        Logger.info("Setting Project '{}' to inactive".format(project.name))
+                        project_service.updateProjectStatus(project.id, False)
+                        inactiveCount += 1
                     continue
             
-            DoneTasks = task_service.findAllTaskStatusForProject(Status.DONE.value, project.id, order="endDate")
-            if(len(DoneTasks) == 0):
-                Logger.info("{} has no done tasks".format())
+            DoneTasks = task_service.findAllTaskStatusForProject(Status.DONE.value, project.id, orderBy=Task.endDate, desc=True)
+            
+            if(len(DoneTasks) == 0):    
+                # If project has no completed tasks, check how long its been active
+                elapsed = datetime.datetime.now() - project.updated
+                
+                if(elapsed > datetime.timedelta(days=INACTIVE_DAYS)):
+                    Logger.info("Project '{}' has not been updated for {} days".format(project.name, INACTIVE_DAYS))
+                    Logger.info("Setting Project '{}' to inactive".format(project.name))
+                    project_service.updateProjectStatus(project.id, False)
+                    inactiveCount += 1
                 continue
             
+            # Check when the last task was completed
             lastDoneTask = DoneTasks[0]
+            elapsed = datetime.datetime.now() - lastDoneTask.endDate
+            if(elapsed > datetime.timedelta(days=INACTIVE_DAYS)):
+                Logger.info("Project '{}' has not been updated for {} days".format(project.name, INACTIVE_DAYS))
+                Logger.info("Setting Project '{}' to inactive".format(project.name))
+                project_service.updateProjectStatus(project.id, False)
+                inactiveCount += 1
+        
+        if(inactiveCount == 0):
+            Logger.success("No Active Projects are idle!")
+        else:
+            Logger.warn("{} Projects have been set to inactive".format(inactiveCount))
+        
+    def streakCommand(self, args=[]):
+        DoneTasks = task_service.findAllTaskStatus(Status.DONE.value)
+        
+        today = 0
+        highest = None
+        days = {}
+        for task in DoneTasks:
             
-            print(lastDoneTask.name, lastDoneTask.endDate - lastDoneTask.startDate)
+            if(task.endDate.date() == datetime.datetime.now().date()):
+                today += 1
+                continue
+            
+            dateString = task.endDate.date().isoformat()
+            
+            if dateString in days:
+                days[dateString] += 1
+            else:
+                days[dateString] = 1
+            
+            if(highest):    
+                if(days[dateString] > days[highest]):
+                    highest = dateString
+                    
+            else:
+                highest = dateString
+            
+        print("Streak")
+        print("  Current: {} tasks".format(today))
+        if(days[highest] >= today):
+            print("  Highest: {} tasks | {}".format(days[highest], highest))
+        else:
+            print("  Highest: {} tasks | TODAY".format(today))
+        
+    
+    def lastTaskCommand(self, args=[]):
+        doneTasks = task_service.findAllTaskStatus(Status.DONE.value, orderBy=Task.endDate, desc=True)
+        
+        if(len(doneTasks) == 0):
+            print("There are no completed tasks")
+            return
+        
+        print("Last done task: {}".format(convertDate(doneTasks[0].endDate)))
+        
+        

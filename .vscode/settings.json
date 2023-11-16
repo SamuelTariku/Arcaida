@@ -1,5 +1,12 @@
 {
-	"cSpell.words": ["backref", "deinit", "LIGHTBLACK", "tprint", "utopiab"],
+	"cSpell.words": [
+		"backref",
+		"deinit",
+		"LIGHTBLACK",
+		"naturaldelta",
+		"tprint",
+		"utopiab"
+	],
 	"[python]": {
 		"editor.defaultFormatter": "ms-python.python"
 	},

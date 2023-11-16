@@ -7,7 +7,7 @@ configData = json.loads(jsonFile.read())
 
 
 # Setup constants
-
+INACTIVE_DAYS = int(configData["inactive_days"])
 DATABASE_PATH = configData["database_path"]
 
 

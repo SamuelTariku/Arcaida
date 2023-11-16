@@ -1,3 +1,4 @@
 {
+	"inactive_days": "1",
 	"database_path": "test.db"
 }

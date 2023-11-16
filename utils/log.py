@@ -32,11 +32,11 @@ class Logger:
             if(not noHighlight):
                 preColorSet = Back.BLUE
                 postColorSet = Back.RESET
-            days = humanize.naturaldelta(datetime.datetime.utcnow() - task.startDate)
+            days = humanize.naturaldelta(datetime.datetime.now() - task.startDate)
         elif(task.status == Status.DONE.value):
             preColorSet = Fore.LIGHTBLACK_EX
             postColorSet = Fore.RESET
-            days = humanize.naturaldelta(datetime.datetime.utcnow() - task.endDate)
+            days = humanize.naturaldelta(datetime.datetime.now() - task.endDate)
         elif(task.status == Status.TESTING.value):
             preColorSet = Fore.MAGENTA
             postColorSet = Fore.RESET

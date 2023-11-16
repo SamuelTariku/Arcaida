@@ -30,6 +30,13 @@ def calculateDate(time_str):
     return currentDate + addedTime
 
 
-def convertDate(date):
-    delta = datetime.now() - date
-    return humanize.naturaltime(delta)
+def convertDate(date, past=True, verbose=True):
+    if(past):
+        delta = datetime.now() - date
+    else:
+        delta = date - datetime.now()
+    
+    if(verbose):
+        return humanize.naturaltime(delta)
+    else:
+        return humanize.naturaldelta(delta)

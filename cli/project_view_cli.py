@@ -1,3 +1,4 @@
+import datetime
 from utils.simple_cli import *
 from utils.log import Logger
 from utils.deltaParser import calculateDate, convertDate
@@ -120,17 +121,16 @@ class ProjectViewCLI(CLI):
             status = Status.TESTING.value
 
         elif(args[1].lower() == "done"):
-            # TODO: when all tasks are done set to inactive
-            
             
             todoTasks = task_service.findAllTaskStatusForProject(Status.BACKLOG.value, task.project.id)
-            
             
             if(task.status == Status.BACKLOG.value):
                 todoTasksCount = todoTasks.count() - 1
             else:
                 todoTasksCount = todoTasks.count()
-        
+                print()
+                print("Completion Time: {}".format(convertDate(task.startDate, verbose=False)))
+                print()
             if(todoTasksCount == 0):
                 Logger.success("All tasks in project completed!")
                 Logger.info("Setting project to inactive...")
@@ -138,7 +138,6 @@ class ProjectViewCLI(CLI):
                 Logger.success("Project set to inactive!")
             
             status = Status.DONE.value
-
         else:
             Logger.error("There is no such status")
             return
