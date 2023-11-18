@@ -23,7 +23,8 @@ class Task(Model):
     endDate = DateTimeField(null=True)
     created = DateTimeField(default=datetime.datetime.now)
     updated = DateTimeField(default=datetime.datetime.now)
-
+    description = TextField(null=True)
+    
     def save(self, *args, **kwargs):
         self.updated = datetime.datetime.now()
         return super(Task, self).save(*args, **kwargs)

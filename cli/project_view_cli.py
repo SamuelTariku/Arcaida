@@ -24,6 +24,8 @@ class ProjectViewCLI(CLI):
             Command("clear", self.clearAllTaskCommand),
             Command("remove", self.removeTaskCommand, 1),
             Command("reorder", self.reorderTaskCommand),
+            Command("activate", self.activateCommand),
+            Command("deactivate", self.deactivateCommand),
 
         ])
         
@@ -277,5 +279,26 @@ class ProjectViewCLI(CLI):
         for task in tasks:
             task.deadline = selectedDeadline
             task.save()
-            
+    
+    def activateCommand(self, args=[]):
+        try:
+            complete = task_service.getCompletionForProject(self.project.id)
+            if(complete == 1.0):
+                Logger.error("Project {} is already complete!".format(self.project.id))
+                return
+
+            update = project_service.updateProjectStatus(self.project.id, True)
+            if(update):
+                Logger.success("Project {name} is set to active!".format(
+                    name=update.name))
+        except:
+            Logger.error("Cannot update project " + self.project.id)
         
+    def deactivateCommand(self, args=[]):
+        try:
+            update = project_service.updateProjectStatus(self.project.id, False)
+            if(update):
+                Logger.success("Project {name} is set to inactive!".format(
+                    name=update.name))
+        except:
+            Logger.error("Cannot update project " + self.project.id)

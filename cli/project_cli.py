@@ -18,8 +18,8 @@ class ProjectCLI(CLI):
             Command("remove", self.removeProjectCommand, 1),
             Command("open", self.openProjectCommand, 1),
             Command("open", self.openProjectCommand, 1),
-            Command("active", self.activeProjectCommand, 1),
-            Command("inactive", self.inactiveProjectCommand, 1),
+            Command("activate", self.activateCommand, 1),
+            Command("deactivate", self.deactivateCommand, 1),
         ])
         
         self.viewAllProjectCommand()
@@ -84,7 +84,7 @@ class ProjectCLI(CLI):
 
         return close
     
-    def activeProjectCommand(self, args):
+    def activateCommand(self, args):
         for arg in args:
             try:
                 complete = task_service.getCompletionForProject(arg)
@@ -101,7 +101,7 @@ class ProjectCLI(CLI):
             except:
                 Logger.error("Cannot update project " + arg)
             
-    def inactiveProjectCommand(self, args):
+    def deactivateCommand(self, args):
         for arg in args:
             try:
                 update = project_service.updateProjectStatus(arg, False)

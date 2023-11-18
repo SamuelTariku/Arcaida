@@ -1,5 +1,6 @@
 
 import datetime
+from cli.project_view_cli import ProjectViewCLI
 from models.task_model import Status, Task
 from peewee import DoesNotExist
 from utils.deltaParser import convertDate
@@ -14,6 +15,7 @@ class BaseCLI(CLI):
         self.commands = self.generateCommandDict([
             Command("projects", self.openProjectsCommand),
             Command("deadlines", self.openDeadlinesCommand),
+            Command("open", self.openProjectCommand),
             Command("active", self.activeCommand),
             Command("view", self.viewCommand),
             Command("switch", self.switchCommand),
@@ -21,10 +23,10 @@ class BaseCLI(CLI):
             Command("edit", self.openDeadlinesCommand),
             Command("check-inactive", self.checkInactiveCommand),
             Command("streak", self.streakCommand),
-            Command("last-task", self.lastTaskCommand)
+            Command("last-task", self.lastTaskCommand),
+            Command("activate", self.activateCommand, 1),
+            Command("deactivate", self.deactivateCommand, 1),
         ])
-        
-        
         print()        
         # make a project inactive if last task was done before a month
         self.checkInactiveCommand()
@@ -300,7 +302,9 @@ class BaseCLI(CLI):
         
     def streakCommand(self, args=[]):
         DoneTasks = task_service.findAllTaskStatus(Status.DONE.value)
-        
+        if(len(DoneTasks) == 0):
+            Logger.info("No Streaks")
+            return
         today = 0
         highest = None
         days = {}
@@ -336,9 +340,46 @@ class BaseCLI(CLI):
         doneTasks = task_service.findAllTaskStatus(Status.DONE.value, orderBy=Task.endDate, desc=True)
         
         if(len(doneTasks) == 0):
-            print("There are no completed tasks")
+            print("Last done task: None")
             return
         
         print("Last done task: {}".format(convertDate(doneTasks[0].endDate)))
-        
-        
+    
+    def activateCommand(self, args=[]):
+        for arg in args:
+            try:
+                complete = task_service.getCompletionForProject(arg)
+                if(complete == 1.0):
+                    Logger.error("Project {} is already complete!".format(arg))
+                    return
+                
+                
+                
+                update = project_service.updateProjectStatus(arg, True)
+                if(update):
+                    Logger.success("Project {name} is set to active!".format(
+                        name=update.name))
+            except:
+                Logger.error("Cannot update project " + arg)
+    
+    def deactivateCommand(self, args):
+        for arg in args:
+            try:
+                update = project_service.updateProjectStatus(arg, False)
+                if(update):
+                    Logger.success("Project {name} is set to inactive!".format(
+                        name=update.name))
+            except:
+                Logger.error("Cannot update project " + arg)
+    
+    def openProjectCommand(self, args):
+        project = project_service.getOneProject(args[0])
+
+        projectView = ProjectViewCLI(project)
+
+        close = projectView.run()
+
+        if(close):
+            self.close()
+
+        return close
