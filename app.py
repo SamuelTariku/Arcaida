@@ -10,7 +10,7 @@ init()
 
 
 # Generate header text
-print(Fore.CYAN, end="")
+print(Fore.LIGHTMAGENTA_EX, end="")
 print("-" * 58)
 tprint("Arcadia")
 print("-" * 58)

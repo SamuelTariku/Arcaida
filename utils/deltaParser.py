@@ -8,7 +8,6 @@ regex = re.compile(
 
 
 def parse_time(time_str):
-    print(time_str)
     parts = regex.match(time_str)
     if not parts:
         return
@@ -26,7 +25,7 @@ def calculateDate(time_str):
 
     if (addedTime == None):
         return
-
+    print(currentDate, addedTime, currentDate + addedTime)
     return currentDate + addedTime
 
 
@@ -40,3 +39,4 @@ def convertDate(date, past=True, verbose=True):
         return humanize.naturaltime(delta)
     else:
         return humanize.naturaldelta(delta)
+

@@ -1,8 +1,10 @@
-from models.task_model import Task, Status
-from utils.config import database
 import datetime
 
 from peewee import fn
+
+from models.task_model import Status, Task
+from utils.config import database
+
 
 def createTask(name, project):
     taskOrder = getTasksByProject(project.id).count() + 1
