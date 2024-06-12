@@ -14,44 +14,67 @@ class DeadlineCLI(CLI):
                 Command("create", self.createDeadlineCommand, 1),
                 Command("view", self.viewDeadlineCommand),
                 Command("rename", self.renameDeadlineCommand, 2),
-                Command("date", self.dateDeadlineCommand, 2),
+                Command("update", self.updateDeadlineCommand, 2),
                 Command("clear", self.clearDeadlineCommand),
                 Command("remove", self.removeDeadlineCommand, 1),
-                Command("activate", self.activateCommand, 1),
-                Command("deactivate", self.deactivateCommand),
             ]
         )
+
+        self.showScreen()
+
+    def showScreen(self):
+        Logger.clear()
+        Logger.header()
+        Logger.heading("Deadlines")
+        self.viewDeadlineCommand()
 
     def createDeadlineCommand(self, args=[]):
         deadlineDate = calculateDate(args[0])
 
+        if deadlineDate == None:
+            self.showScreen()
+            Logger.error("Incorrect Datestring")
+            return
         newDeadline = deadline_service.createDeadline(
             name=" ".join(args[1::]), date=deadlineDate
         )
 
         if newDeadline:
+            self.showScreen()
             Logger.info("Deadline Name: {name}".format(name=newDeadline.name))
             Logger.success("Deadline is created!")
 
     def viewDeadlineCommand(self, args=[]):
-        deadlines = deadline_service.getAllDeadline()
+        pendingDeadlines = deadline_service.findAllDeadlineState(
+            DeadlineStates.PENDING.value
+        )
+        completedDeadlines = deadline_service.findAllDeadlineState(
+            DeadlineStates.COMPLETE.value
+        )
+
         print()
-        for deadline in deadlines:
+        for deadline in completedDeadlines:
             Logger.deadline(deadline)
+
+        for deadline in pendingDeadlines:
+            Logger.deadline(deadline)
+
         print()
 
     def renameDeadlineCommand(self, args=[]):
         rename = deadline_service.updateDeadline(args[0], name=" ".join(args[1::]))
 
         if rename:
+            self.showScreen()
             Logger.info("Deadline Name: {name}".format(name=" ".join(args[1::])))
             Logger.success("Deadline Name is updated!")
 
-    def dateDeadlineCommand(self, args=[]):
+    def updateDeadlineCommand(self, args=[]):
         deadlineDate = calculateDate(args[1])
         date = deadline_service.updateDeadline(args[0], date=deadlineDate)
 
         if date:
+            self.showScreen()
             Logger.info("Deadline Date: {date}".format(date=convertDate(deadlineDate)))
             Logger.success("Deadline Date is updated!")
 
@@ -59,6 +82,7 @@ class DeadlineCLI(CLI):
         clear = deadline_service.deleteAllDeadline()
 
         if clear:
+            self.showScreen()
             Logger.info("Number of deadlines deleted: {num}".format(num=clear))
             Logger.success("All deadlines have been deleted!")
 
@@ -66,36 +90,6 @@ class DeadlineCLI(CLI):
         remove = deadline_service.deleteOneDeadline(args[0])
 
         if remove:
+            self.showScreen()
             Logger.info("Number of deadlines deleted: {num}".format(num=remove))
             Logger.success("All deadlines have been deleted!")
-
-    def activateCommand(self, args=[]):
-        try:
-            update = deadline_service.updateState(args[0], DeadlineStates.ACTIVE.value)
-
-            if update:
-                Logger.success(
-                    "Deadline {name} is set to active!".format(name=update.name)
-                )
-        except Exception as e:
-            Logger.error(e)
-
-    def deactivateCommand(self, args=[]):
-        # find the active deadline
-        activeDeadlines = deadline_service.findAllDeadlineState(
-            DeadlineStates.ACTIVE.value
-        )
-
-        try:
-            # just in case
-            for deadline in activeDeadlines:
-                update = deadline_service.updateState(
-                    deadline.id, DeadlineStates.PENDING.value
-                )
-
-            if update:
-                Logger.success(
-                    "Deadline {name} is set to active!".format(name=update.name)
-                )
-        except Exception as e:
-            Logger.error(e)

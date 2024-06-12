@@ -16,20 +16,21 @@ class Status(Enum):
 class Task(Model):
     name = CharField()
     status = IntegerField(default=1)
-    project = ForeignKeyField(Project, backref="tasks", on_delete='CASCADE')
+    project = ForeignKeyField(Project, backref="tasks", on_delete="CASCADE")
     order = IntegerField(null=True)
-    deadline = ForeignKeyField(Deadline, null=True, backref="tasks")
+    deadline = ForeignKeyField(
+        Deadline, null=True, backref="tasks", on_delete="CASCADE"
+    )
     startDate = DateTimeField(null=True)
     endDate = DateTimeField(null=True)
     created = DateTimeField(default=datetime.datetime.now)
     updated = DateTimeField(default=datetime.datetime.now)
     description = TextField(null=True)
-    
+
     def save(self, *args, **kwargs):
         self.updated = datetime.datetime.now()
         return super(Task, self).save(*args, **kwargs)
-    
-    
+
     class Meta:
         database = database
         # indexes = (

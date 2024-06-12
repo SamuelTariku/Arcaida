@@ -3,11 +3,13 @@ from cli.project_view_cli import ProjectViewCLI
 from models.task_model import Status, Task
 from peewee import DoesNotExist
 from utils.deltaParser import convertDate
+from utils.log import LogCollection
 from utils.simple_cli import *
 from cli.project_cli import ProjectCLI
 from cli.deadline_cli import DeadlineCLI
-from services import project_service, task_service
+from services import project_service, task_service, deadline_service
 from utils.config import INACTIVE_DAYS
+from models.deadline_model import DeadlineStates
 
 
 class BaseCLI(CLI):
@@ -17,12 +19,12 @@ class BaseCLI(CLI):
             [
                 Command("projects", self.openProjectsCommand),
                 Command("deadlines", self.openDeadlinesCommand),
-                Command("open", self.openProjectCommand),
+                Command("open", self.openProjectCommand, 1),
                 Command("active", self.activeCommand),
-                Command("view", self.viewCommand),
+                # Command("view", self.viewCommand),
                 Command("switch", self.switchCommand),
                 Command("done", self.doneCommand),
-                Command("edit", self.openDeadlinesCommand),
+                # Command("due", self.listDeadlinesCommand),
                 Command("check-inactive", self.checkInactiveCommand),
                 Command("streak", self.streakCommand),
                 Command("last-task", self.lastTaskCommand),
@@ -30,21 +32,36 @@ class BaseCLI(CLI):
                 Command("deactivate", self.deactivateCommand, 1),
             ]
         )
-        print()
-        # make a project inactive if last task was done before a month
-        self.checkInactiveCommand()
+        self.showScreen()
+
+    def showScreen(self):
+
+        Logger.clear()
+
+        Logger.header()
 
         # show starting text
-        print()
-        self.lastTaskCommand()
-        print()
-        self.streakCommand()
-        print()
+        # print()
+        # self.lastTaskCommand()
+        # print()
+        # self.streakCommand()
+        # print()
 
-        # TODO: the search for current task is done twice, replace with cli classes
+        # Logger.heading("CHECKING STATUS")
+        # print()
+        # # make a project inactive if last task was done before a month
+        # self.checkInactiveCommand()
+        # print()
+        # self.viewCommand()
+        # Logger.heading("ACTIVE PROJECTS")
         self.activeCommand()
 
-        self.viewCommand()
+        print()
+        print()
+
+        # Logger.heading("Deadlines")
+        # self.listDeadlinesCommand()
+        # print()
 
     def openProjectsCommand(self, args=[]):
         projectCLI = ProjectCLI()
@@ -52,6 +69,9 @@ class BaseCLI(CLI):
         close = projectCLI.run()
         if close:
             self.close()
+        else:
+            self.showScreen()
+
         return close
 
     def openDeadlinesCommand(self, args=[]):
@@ -60,7 +80,24 @@ class BaseCLI(CLI):
         close = deadlineCLI.run()
         if close:
             self.close()
+        else:
+            self.showScreen()
         return close
+
+    def listDeadlinesCommand(self, args=[]):
+        pendingDeadlines = deadline_service.findAllDeadlineState(
+            DeadlineStates.PENDING.value
+        )
+
+        print()
+        count = 0
+        for deadline in pendingDeadlines:
+            Logger.deadline(deadline)
+
+            if count >= 4:
+                break
+            count += 1
+        print()
 
     def activeCommand(self, args=[]):
         activeProjects = project_service.getActiveProjects()
@@ -68,31 +105,39 @@ class BaseCLI(CLI):
         # get current task
         current = task_service.findAllTaskStatus(Status.IN_PROGRESS.value)
 
-        print("Active Projects")
         if len(activeProjects) == 0:
-            Logger.warn("No active projects set!")
-            print()
+            Logger.warn("No Active Projects set!", " ")
             return
 
         if len(current) == 0:
-            highlight = None
-        else:
-            highlight = current[0].project.id
+            currentProject = None
 
-        print()
-        for project in activeProjects:
+        elif len(current) > 1:
+            Logger.warn("There is more than one IN-PROGRESS task set!")
+            Logger.warn("Something in the code has gone wrong!")
+        else:
+            currentProject = current[0].project.id
+
+        for index, project in enumerate(activeProjects):
             complete = task_service.getCompletionForProject(project.id)
-            Logger.project(
-                project,
-                complete,
-                highlight == project.id if highlight != None else False,
-            )
-        print()
+            if currentProject != None and currentProject == project.id:
+                if index != 0:
+                    print()
+
+                print("-" * 68)
+                Logger.project(
+                    project,
+                    complete,
+                    highlight=True,
+                )
+                print("-" * 68)
+                Logger.task(current[0], noHighlight=True, noOrder=True)
+                print()
+            else:
+                Logger.project(project, complete)
 
     def viewCommand(self, args=[]):
         current = task_service.findAllTaskStatus(Status.IN_PROGRESS.value)
-
-        print("Current Task")
 
         if len(current) == 0:
             Logger.warn("There is no IN-PROGRESS task set")
@@ -101,12 +146,12 @@ class BaseCLI(CLI):
         elif len(current) > 1:
             Logger.warn("There is more than one IN-PROGRESS task set!")
             Logger.warn("Something in the code has gone wrong!")
-        print()
+
         complete = task_service.getCompletionForProject(current[0].project.id)
         Logger.project(current[0].project, complete)
-        print("-" * 58)
+        print("-" * 68)
         Logger.task(current[0], noHighlight=True, noOrder=True)
-        print("" * 58)
+        print("" * 68)
         print()
 
     def switchCommand(self, args=[]):
@@ -127,6 +172,8 @@ class BaseCLI(CLI):
         isTaskRandom = False
         projectNumber = None
 
+        logs = LogCollection()
+
         if len(args) != 0:
             if args[0] in ("project", "-p"):
                 projectNumber = args[1] if len(args) > 1 else None
@@ -143,12 +190,16 @@ class BaseCLI(CLI):
             elif args[0].isnumeric():
                 projectNumber = int(args[0])
             else:
+                self.showScreen()
+                logs.execute()
                 Logger.error("Unknown {}: please check documentation".format(args[0]))
                 return
 
         activeProjects = project_service.getActiveProjects(random=isProjectRandom)
 
         if len(activeProjects) == 0:
+            self.showScreen()
+            logs.execute()
             Logger.warn("No active projects set!")
             print()
             return
@@ -162,11 +213,13 @@ class BaseCLI(CLI):
             try:
                 nextProject = project_service.getOneProject(projectNumber)
                 if not nextProject.active:
+                    self.showScreen()
+                    logs.execute()
                     Logger.error("Project is not active")
                     return
                 if len(currentTasksQuery) != 0:
                     currentTask = currentTasksQuery[0]
-                    Logger.info(
+                    logs.info(
                         "Setting Task '{}' to BACKLOG...".format(currentTask.name)
                     )
                     currentTask = task_service.updateStatus(
@@ -174,6 +227,8 @@ class BaseCLI(CLI):
                     )
 
             except DoesNotExist:
+                self.showScreen()
+                logs.execute()
                 Logger.error("No project with that id exists!")
                 return
         else:
@@ -194,10 +249,10 @@ class BaseCLI(CLI):
                         nextProject = activeProjects[0]
                     else:
                         nextProject = nextProjectList[0]
-                    Logger.info("Switching project to '{}'".format(nextProject.name))
+                    logs.info("Switching project to '{}'".format(nextProject.name))
                 else:
                     nextProject = currentTask.project
-                Logger.info("Setting Task '{}' to BACKLOG...".format(currentTask.name))
+                logs.info("Setting Task '{}' to BACKLOG...".format(currentTask.name))
                 currentTask = task_service.updateStatus(
                     currentTask, Status.BACKLOG.value
                 )
@@ -207,6 +262,8 @@ class BaseCLI(CLI):
         )
 
         if len(todoTasksQuery) == 0:
+            self.showScreen()
+            logs.execute()
             Logger.error("There is an active project with no BACKLOG tasks")
             raise Exception("Active Project with no BACKLOG task")
 
@@ -221,11 +278,12 @@ class BaseCLI(CLI):
             else:
                 firstTodo = nextTodoList[0]
 
-        Logger.info("Setting Task '{}' to IN-PROGRESS...".format(firstTodo.name))
+        logs.info("Setting Task '{}' to IN-PROGRESS...".format(firstTodo.name))
         task_service.updateStatus(firstTodo, Status.IN_PROGRESS.value)
-        Logger.success("Tasks have been updated!")
-        print()
-        self.viewCommand()
+        logs.success("Tasks have been updated!")
+
+        self.showScreen()
+        logs.execute()
 
     def doneCommand(self, args=[]):
         currentTaskQuery = task_service.findAllTaskStatus(Status.IN_PROGRESS.value)
@@ -269,7 +327,7 @@ class BaseCLI(CLI):
 
         self.viewCommand()
 
-    def checkInactiveCommand(self, args=[]):
+    def checkInactiveCommand(self, indent=False, args=[]):
         currentTaskQuery = task_service.findAllTaskStatus(Status.IN_PROGRESS.value)
 
         currentTask = None
@@ -280,7 +338,16 @@ class BaseCLI(CLI):
 
         inactiveCount = 0
 
+        indentSpace = ""
+        if indent:
+            indentSpace = " "
+
         for project in activeProjects:
+            # Check if the project has remained active for long enough
+            elapsed = datetime.datetime.now() - project.updated
+            if elapsed < datetime.timedelta(days=INACTIVE_DAYS):
+                continue
+
             if currentTask != None:
                 if currentTask.project.id == project.id:
                     # Check how long the current task hasn't been completed
@@ -289,16 +356,19 @@ class BaseCLI(CLI):
                         Logger.info(
                             "Project '{}' has not been updated for {} days".format(
                                 project.name, INACTIVE_DAYS
-                            )
+                            ),
+                            indent=indentSpace,
                         )
 
                         Logger.info(
-                            "Setting Task '{}' to BACKLOG".format(currentTask.name)
+                            "Setting Task '{}' to BACKLOG".format(currentTask.name),
+                            indent=indentSpace,
                         )
                         task_service.updateStatus(currentTask, Status.BACKLOG.value)
 
                         Logger.info(
-                            "Setting Project '{}' to inactive".format(project.name)
+                            "Setting Project '{}' to inactive".format(project.name),
+                            indent=indentSpace,
                         )
                         project_service.updateProjectStatus(project.id, False)
                         inactiveCount += 1
@@ -309,18 +379,19 @@ class BaseCLI(CLI):
             )
 
             if len(DoneTasks) == 0:
-                # If project has no completed tasks, check how long its been active
-                elapsed = datetime.datetime.now() - project.updated
-
-                if elapsed > datetime.timedelta(days=INACTIVE_DAYS):
-                    Logger.info(
-                        "Project '{}' has not been updated for {} days".format(
-                            project.name, INACTIVE_DAYS
-                        )
-                    )
-                    Logger.info("Setting Project '{}' to inactive".format(project.name))
-                    project_service.updateProjectStatus(project.id, False)
-                    inactiveCount += 1
+                # If project has no completed tasks since activation, remove it
+                Logger.info(
+                    "Project '{}' has not been updated for {} days".format(
+                        project.name, INACTIVE_DAYS
+                    ),
+                    indent=indentSpace,
+                )
+                Logger.info(
+                    "Setting Project '{}' to inactive".format(project.name),
+                    indent=indentSpace,
+                )
+                project_service.updateProjectStatus(project.id, False)
+                inactiveCount += 1
                 continue
 
             # Check when the last task was completed
@@ -330,16 +401,23 @@ class BaseCLI(CLI):
                 Logger.info(
                     "Project '{}' has not been updated for {} days".format(
                         project.name, INACTIVE_DAYS
-                    )
+                    ),
+                    indent=indentSpace,
                 )
-                Logger.info("Setting Project '{}' to inactive".format(project.name))
+                Logger.info(
+                    "Setting Project '{}' to inactive".format(project.name),
+                    indent=indentSpace,
+                )
                 project_service.updateProjectStatus(project.id, False)
                 inactiveCount += 1
 
         if inactiveCount == 0:
-            Logger.warn("No Active Projects are idle!")
+            Logger.warn("No Active Projects are idle!", indent=indentSpace)
         else:
-            Logger.warn("{} Projects have been set to inactive".format(inactiveCount))
+            Logger.warn(
+                "{} Projects have been set to inactive".format(inactiveCount),
+                indent=indentSpace,
+            )
 
     def streakCommand(self, args=[]):
         DoneTasks = task_service.findAllTaskStatus(Status.DONE.value)
@@ -389,30 +467,37 @@ class BaseCLI(CLI):
         print("Last done task: {}".format(convertDate(doneTasks[0].endDate)))
 
     def activateCommand(self, args=[]):
+
         for arg in args:
             try:
                 complete = task_service.getCompletionForProject(arg)
                 if complete == 1.0:
+                    self.showScreen()
                     Logger.error("Project {} is already complete!".format(arg))
                     return
 
                 update = project_service.updateProjectStatus(arg, True)
                 if update:
+                    self.showScreen()
                     Logger.success(
                         "Project {name} is set to active!".format(name=update.name)
                     )
             except:
+                self.showScreen()
                 Logger.error("Cannot update project " + arg)
 
     def deactivateCommand(self, args):
+
         for arg in args:
             try:
                 update = project_service.updateProjectStatus(arg, False)
                 if update:
+                    self.showScreen()
                     Logger.success(
                         "Project {name} is set to inactive!".format(name=update.name)
                     )
             except:
+                self.showScreen()
                 Logger.error("Cannot update project " + arg)
 
     def openProjectCommand(self, args):
@@ -424,5 +509,7 @@ class BaseCLI(CLI):
 
         if close:
             self.close()
+        else:
+            self.showScreen()
 
         return close

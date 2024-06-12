@@ -9,13 +9,6 @@ from colorama import init, deinit, Fore, Style
 init()
 
 
-# Generate header text
-print(Fore.LIGHTMAGENTA_EX, end="")
-print("-" * 58)
-tprint("Arcadia")
-print("-" * 58)
-print(Fore.RESET, end="")
-
 # connect to the database
 Logger.info("connecting to database...")
 database.connect()

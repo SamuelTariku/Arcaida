@@ -1,6 +1,6 @@
 import datetime
 from utils.simple_cli import *
-from utils.log import Logger
+from utils.log import Logger, LogCollection
 from utils.deltaParser import calculateDate, convertDate
 from services import task_service, deadline_service, project_service
 from models.task_model import Status
@@ -29,13 +29,18 @@ class ProjectViewCLI(CLI):
                 Command("deactivate", self.deactivateCommand),
             ]
         )
+        self.showScreen()
 
+    def showScreen(self, args=[]):
+        Logger.clear()
+        Logger.header()
+        Logger.heading("Project {}".format(self.project.name))
         self.viewTaskCommand()
 
     def createTaskCommand(self, args):
         newTask = task_service.createTask(" ".join(args), self.project)
-
         if newTask:
+            self.showScreen()
             Logger.info("Task Name: {name}".format(name=newTask.name))
             Logger.success("Task is created!")
 
@@ -63,6 +68,7 @@ class ProjectViewCLI(CLI):
             if newTask:
                 created += 1
 
+        self.showScreen()
         Logger.info("Number of tasks created: {num}".format(num=created))
         if created != 0:
             Logger.success("Tasks have been created!")
@@ -90,10 +96,14 @@ class ProjectViewCLI(CLI):
             print()
 
     def statusTaskCommand(self, args):
+        logs = LogCollection()
+
         task = task_service.getTaskByOrder(self.project.id, args[0])
 
         if task == None:
-            Logger.error("There is no task with that order")
+            logs.error("There is no task with that order")
+            self.showScreen()
+            logs.execute()
             return
 
         status = None
@@ -106,6 +116,7 @@ class ProjectViewCLI(CLI):
 
             # Set IN-PROGRESS task to BACKLOG
             if len(currentTasks) >= 1:
+                self.showScreen()
                 Logger.info("There can only be one IN-PROGRESS task")
                 replace = input("replace? (y/N)>")
 
@@ -115,12 +126,14 @@ class ProjectViewCLI(CLI):
                         currentTask.state = Status.BACKLOG.value
                         task_service.updateStatus(currentTask, Status.BACKLOG.value)
                 else:
+                    self.showScreen()
+                    logs.execute()
                     return
             # Set the project to active
             if not task.project.active:
-                Logger.info("Set project to active...")
+                logs.info("Set project to active...")
                 project_service.updateProjectStatus(task.project.id, True)
-                Logger.success("Project is active!")
+                logs.success("Project is active!")
 
             status = Status.IN_PROGRESS.value
 
@@ -136,35 +149,41 @@ class ProjectViewCLI(CLI):
                 todoTasksCount = todoTasks.count() - 1
             else:
                 todoTasksCount = todoTasks.count()
-                print()
-                print(
+                logs.info(
                     "Completion Time: {}".format(
                         convertDate(task.startDate, verbose=False)
                     )
                 )
-                print()
-                
+
             if todoTasksCount == 0:
-                Logger.success("All tasks in project completed!")
-                Logger.info("Setting project to inactive...")
+                logs.success("All tasks in project completed!")
+                logs.info("Setting project to inactive...")
                 project_service.updateProjectStatus(task.project.id, False)
-                Logger.success("Project set to inactive!")
+                logs.success("Project set to inactive!")
 
             status = Status.DONE.value
         else:
-            Logger.error("There is no such status")
+            logs.error("There is no such status")
+            self.showScreen()
+            logs.execute()
             return
 
         update = task_service.updateStatus(task, status=status)
         if update:
-            Logger.info("Task Name: {name}".format(name=task.name))
-            Logger.success(
+            logs.info("Task Name: {name}".format(name=task.name))
+            logs.success(
                 "Task status is set to {status}!".format(status=Status(status).name)
             )
 
+        self.showScreen()
+        logs.execute()
+
     def renameTaskCommand(self, args):
+
         task = task_service.getTaskByOrder(self.project.id, args[0])
+
         if task == None:
+            self.showScreen()
             Logger.error("There is no task with that order")
             return
         # err, update = task_service.renameTask(" ".join(args[1::]))
@@ -172,6 +191,7 @@ class ProjectViewCLI(CLI):
 
         try:
             task.save()
+            self.showScreen()
             Logger.info("Task Name: {name}".format(name=" ".join(args[1::])))
             Logger.success("Task name is updated!")
         except Exception as e:
@@ -179,40 +199,48 @@ class ProjectViewCLI(CLI):
 
     def clearAllTaskCommand(self, args=[]):
         clear = task_service.deleteTasksForProject(self.project.id)
-
         if clear:
+            self.showScreen()
             Logger.info("Number of tasks deleted: {num}".format(num=clear))
             Logger.success("All project tasks have been deleted!")
 
     def removeTaskCommand(self, args):
+
         task = task_service.getTaskByOrder(self.project.id, args[0])
         if task == None:
+            self.showScreen()
             Logger.error("There is no task with that order")
             return
+
         remove = task_service.deleteTask(task)
 
         if remove:
+            self.showScreen()
             Logger.info("Number of tasks deleted: {num}".format(num=remove))
             Logger.success("Task has been deleted!")
 
     def reorderTaskCommand(self, args=[]):
         task_service.reassignOrder(self.project.id)
+        self.showScreen()
         Logger.success("Tasks have been reordered")
-        self.viewTaskCommand()
 
     def assignDeadlineCommand(self, args):
         # deadline 2 4 5 2
+        self.showScreen()
         tasks = task_service.getManyTask(self.project.id, args)
 
         if len(tasks) == 0:
+
             Logger.error("There is no task with that order")
             return
         # show deadlines viewer
         deadlines = deadline_service.getAllDeadline()
 
         if len(deadlines) == 0:
+
             Logger.error("No deadlines created!")
             return
+
         print()
         for deadline in deadlines:
             print(
@@ -225,6 +253,7 @@ class ProjectViewCLI(CLI):
         deadlineID = input("select>")
 
         if not deadlineID.isnumeric():
+
             Logger.error("deadline id incorrect!")
             return
 
@@ -234,16 +263,18 @@ class ProjectViewCLI(CLI):
             Logger.error("There is no deadline with that id")
             return
 
-        Logger.info("deadline " + selectedDeadline.name)
         # assign deadline to all passed tasks
         for task in tasks:
             task.deadline = selectedDeadline
             task.save()
+        Logger.info("deadline " + selectedDeadline.name)
 
     def activateCommand(self, args=[]):
+        self.showScreen()
         try:
             complete = task_service.getCompletionForProject(self.project.id)
             if complete == 1.0:
+
                 Logger.error("Project {} is already complete!".format(self.project.id))
                 return
 
@@ -256,6 +287,7 @@ class ProjectViewCLI(CLI):
             Logger.error("Cannot update project " + self.project.id)
 
     def deactivateCommand(self, args=[]):
+        self.showScreen()
         try:
             update = project_service.updateProjectStatus(self.project.id, False)
             if update:

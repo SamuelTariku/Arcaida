@@ -19,7 +19,7 @@ def getOneDeadline(id):
 
 
 def findAllDeadlineState(state):
-    return Deadline.select().where(Deadline.state == state)
+    return Deadline.select().where(Deadline.state == state).order_by(Deadline.date)
 
 
 def updateDeadline(id, name=None, date=None):
@@ -38,10 +38,6 @@ def updateDeadline(id, name=None, date=None):
 def updateState(id, state):
     deadline = Deadline.get_by_id(id)
 
-    if state == DeadlineStates.ACTIVE.value:
-        activeDeadlines = findAllDeadlineState(DeadlineStates.ACTIVE.value)
-        if len(activeDeadlines) > 0:
-            raise Exception("Cannot have more than one active deadline")
 
     deadline.state = state
 

@@ -10,30 +10,38 @@ class ProjectCLI(CLI):
     def __init__(self) -> None:
         super().__init__()
         self.prompt = "Projects"
-        self.commands = self.generateCommandDict([
-            Command("create", self.createProjectCommand, 1),
-            Command("view", self.viewAllProjectCommand),
-            Command("rename", self.renameProjectCommand, 2),
-            Command("clear", self.clearAllProjectCommand),
-            Command("remove", self.removeProjectCommand, 1),
-            Command("open", self.openProjectCommand, 1),
-            Command("open", self.openProjectCommand, 1),
-            Command("activate", self.activateCommand, 1),
-            Command("deactivate", self.deactivateCommand, 1),
-        ])
-        
+        self.commands = self.generateCommandDict(
+            [
+                Command("create", self.createProjectCommand, 1),
+                Command("view", self.viewAllProjectCommand),
+                Command("rename", self.renameProjectCommand, 2),
+                Command("clear", self.clearAllProjectCommand),
+                Command("remove", self.removeProjectCommand, 1),
+                Command("open", self.openProjectCommand, 1),
+                Command("open", self.openProjectCommand, 1),
+                Command("activate", self.activateCommand, 1),
+                Command("deactivate", self.deactivateCommand, 1),
+            ]
+        )
+        self.showScreen()
+
+    def showScreen(self):
+        Logger.clear()
+        Logger.header()
+        Logger.heading("Projects")
         self.viewAllProjectCommand()
 
     def createProjectCommand(self, args):
         newProject = project_service.createProject(" ".join(args))
-        if(newProject):
+        if newProject:
+            self.showScreen()
             Logger.info("Project Name: {name}".format(name=newProject.name))
             Logger.success("Project is created!")
 
     # TODO: add filters
     def viewAllProjectCommand(self, args=[]):
         projects = project_service.getAllProject()
-        
+
         print()
         for project in projects:
             complete = task_service.getCompletionForProject(project.id)
@@ -42,34 +50,28 @@ class ProjectCLI(CLI):
 
     def renameProjectCommand(self, args):
         try:
-            update = project_service.updateProjectName(
-                args[0],
-                " ".join(args[1::])
-            )
-            
-            if(update):
-                Logger.success("Project {name} is updated!".format(
-                        name=update.name))
+            update = project_service.updateProjectName(args[0], " ".join(args[1::]))
+
+            if update:
+                self.showScreen()
+                Logger.success("Project {name} is updated!".format(name=update.name))
         except Exception as err:
             Logger.error("Cannot update project!")
             print(err)
-        
 
     def clearAllProjectCommand(self, args=[]):
         clear = project_service.deleteAllProject()
-        if(clear):
-            Logger.info("Number of projects deleted: {num}".format(
-                num=clear
-            ))
+        if clear:
+            self.showScreen()
+            Logger.info("Number of projects deleted: {num}".format(num=clear))
             Logger.success("All projects have been deleted!")
 
     def removeProjectCommand(self, args):
         remove = project_service.deleteOneProject(args[0])
 
-        if(remove):
-            Logger.info("Number of projects deleted: {num}".format(
-                num=remove
-            ))
+        if remove:
+            self.showScreen()
+            Logger.info("Number of projects deleted: {num}".format(num=remove))
             Logger.success("Project has been deleted!")
 
     def openProjectCommand(self, args):
@@ -79,34 +81,40 @@ class ProjectCLI(CLI):
 
         close = projectView.run()
 
-        if(close):
+        if close:
             self.close()
-
+        else:
+            self.showScreen()
         return close
-    
+
     def activateCommand(self, args):
         for arg in args:
             try:
                 complete = task_service.getCompletionForProject(arg)
-                if(complete == 1.0):
+                if complete == 1.0:
+                    self.showScreen()
                     Logger.error("Project {} is already complete!".format(arg))
                     return
-                
-                
-                
+
                 update = project_service.updateProjectStatus(arg, True)
-                if(update):
-                    Logger.success("Project {name} is set to active!".format(
-                        name=update.name))
+                if update:
+                    self.showScreen()
+                    Logger.success(
+                        "Project {name} is set to active!".format(name=update.name)
+                    )
             except:
+                self.showScreen()
                 Logger.error("Cannot update project " + arg)
-            
+
     def deactivateCommand(self, args):
         for arg in args:
             try:
                 update = project_service.updateProjectStatus(arg, False)
-                if(update):
-                    Logger.success("Project {name} is set to inactive!".format(
-                        name=update.name))
+                if update:
+                    self.showScreen()
+                    Logger.success(
+                        "Project {name} is set to inactive!".format(name=update.name)
+                    )
             except:
+                self.showScreen()
                 Logger.error("Cannot update project " + arg)

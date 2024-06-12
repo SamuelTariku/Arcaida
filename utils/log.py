@@ -4,32 +4,78 @@ from models.task_model import Status
 import datetime
 import humanize
 from art import tprint
+import os
 
 from utils.deltaParser import convertDate
 
 
+class LogCollection:
+    def __init__(self):
+        self.logs = []  # Array of sets
+
+    def add(self, logFunction, text):
+        self.logs.append((logFunction, text))
+
+    def success(self, text):
+        self.logs.append((Logger.success, text))
+
+    def error(self, text):
+        self.logs.append((Logger.error, text))
+
+    def warn(self, text):
+        self.logs.append((Logger.warn, text))
+
+    def heading(self, text):
+        self.logs.append((Logger.heading, text))
+        # tprint(indent + text, font="mini")
+
+    def info(self, text):
+        self.logs.append((Logger.info, text))
+
+    def execute(self):
+        for logFunction, text in self.logs:
+            logFunction(text)
+
+
 class Logger:
-    def celebrate(text):
-        tprint(text, font="fuzzy")
 
-    def success(text):
-        print(Fore.GREEN + "[+]", text, Fore.RESET)
+    def clear():
+        os.system("cls" if os.name == "nt" else "clear")
 
-    def error(text):
-        print(Fore.RED + "[!]", text, Fore.RESET)
+    def header():
+        print()
+        # Generate header text
+        print(Fore.CYAN, end="")
+        # print("-" * 88)
+        tprint("Arcadia", "shadow")
+        # print(" " * 88)
+        print(Fore.RESET, end="")
 
-    def warn(text):
-        print(Fore.LIGHTYELLOW_EX + "[~]", text, Fore.RESET)
+    def celebrate(text, indent=""):
+        tprint(indent + text, font="fuzzy")
 
-    def info(text):
-        print(Fore.BLUE + "[.]", text, Fore.RESET)
+    def success(text, indent=""):
+        print(indent, Fore.LIGHTGREEN_EX + "[+]", text, Fore.RESET)
+
+    def error(text, indent=""):
+        print(indent, Fore.LIGHTRED_EX + "[!]", text, Fore.RESET)
+
+    def warn(text, indent=""):
+        print(indent, Fore.LIGHTBLACK_EX + "[*]", text, Fore.RESET)
+
+    def heading(text, indent=""):
+        print(indent, Fore.LIGHTBLUE_EX + "--", text.upper(), "--", Fore.RESET)
+        # tprint(indent + text, font="mini")
+
+    def info(text, indent=""):
+        print(indent, Fore.LIGHTWHITE_EX + "[-]", text, Fore.RESET)
 
     def task(task, noHighlight=False, noOrder=False):
         days = ""
         preColorSet = ""
 
-        raw = "{num:>3}| {name:<42} {days}"
-        noNumRaw = (" " * 5) + "{name:<42} {days}"
+        raw = "{num:>3}. {name:<53} {days}"
+        noNumRaw = (" " * 5) + "{name:<53} {days}"
 
         if task.status == Status.BACKLOG.value:
             days = " "
@@ -58,14 +104,14 @@ class Logger:
 
     def project(project, complete, highlight=False):
         preColorSet = ""
-        raw = "{num:>3}| {name:<12} |{progress:<30}| {complete:.0%}"
+        raw = "{num:>3}. {name:<26} |{progress:<30}| {complete:.0%}"
 
         # TODO: Validation for project name set max to 12 chars
         if not project.active:
             preColorSet = Fore.LIGHTBLACK_EX
 
         if highlight:
-            preColorSet = Fore.BLUE
+            preColorSet = Fore.CYAN
 
         print(
             preColorSet
@@ -80,26 +126,21 @@ class Logger:
 
     def deadline(deadline):
         preColorSet = ""
-        raw = "{id:>3}) {name:<38} {date}"
-        completedRaw = "{id:>3}) {name:<38} {text}"
+        raw = "{id:>3}. {name:<52} {date}"
+        completedRaw = "{id:>3}) {name:<52} {text}"
         completed = False
         completedText = ""
 
         if deadline.state == DeadlineStates.PENDING.value:
-            pass
-
-        elif deadline.state == DeadlineStates.ACTIVE.value:
-            preColorSet = Fore.BLUE
+            if deadline.date < datetime.datetime.now():
+                preColorSet = Fore.RED
+                completed = True
+                completedText = "LATE"
 
         elif deadline.state == DeadlineStates.COMPLETE.value:
             preColorSet = Fore.BLACK
             completed = True
             completedText = "COMPLETE"
-
-        elif deadline.state == DeadlineStates.LATE_COMPLETE.value:
-            preColorSet = Fore.BLACK
-            completed = True
-            completedText = "LATE"
 
         if completed:
             print(
@@ -117,10 +158,11 @@ class Logger:
                     name=deadline.name,
                     date=convertDate(
                         deadline.date,
-                        verbose=not (
-                            (deadline.date - datetime.datetime.now())
-                            > datetime.timedelta(hours=24)
-                        ),
+                        # verbose=not (
+                        #     (deadline.date - datetime.datetime.now())
+                        #     > datetime.timedelta(hours=24)
+                        # ),
+                        verbose=False,
                     ),
                 ),
                 Fore.RESET,
