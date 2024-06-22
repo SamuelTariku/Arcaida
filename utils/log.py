@@ -13,6 +13,10 @@ class LogCollection:
     def __init__(self):
         self.logs = []  # Array of sets
 
+    def execute(self):
+        for logFunction, text in self.logs:
+            logFunction(text)
+
     def add(self, logFunction, text):
         self.logs.append((logFunction, text))
 
@@ -32,9 +36,8 @@ class LogCollection:
     def info(self, text):
         self.logs.append((Logger.info, text))
 
-    def execute(self):
-        for logFunction, text in self.logs:
-            logFunction(text)
+    def celebrate(self, text):
+        self.logs.append((Logger.celebrate, text))
 
 
 class Logger:
@@ -52,7 +55,7 @@ class Logger:
         print(Fore.RESET, end="")
 
     def celebrate(text, indent=""):
-        tprint(indent + text, font="fuzzy")
+        tprint(indent + text, font="straight")
 
     def success(text, indent=""):
         print(indent, Fore.LIGHTGREEN_EX + "[+]", text, Fore.RESET)
@@ -70,7 +73,7 @@ class Logger:
     def info(text, indent=""):
         print(indent, Fore.LIGHTWHITE_EX + "[-]", text, Fore.RESET)
 
-    def task(task, noHighlight=False, noOrder=False):
+    def task(task, noHighlight=False, noIndex=False, byID=False):
         days = ""
         preColorSet = ""
 
@@ -90,15 +93,20 @@ class Logger:
             preColorSet = Fore.MAGENTA
             days = "?"
 
-        if noOrder:
+        if noIndex:
             print(
                 preColorSet
-                + noNumRaw.format(num=task.order, name=task.name, days=days),
+                + noNumRaw.format(
+                    num=task.order if not byID else task.id, name=task.name, days=days
+                ),
                 Fore.RESET + Back.RESET,
             )
         else:
             print(
-                preColorSet + raw.format(num=task.order, name=task.name, days=days),
+                preColorSet
+                + raw.format(
+                    num=task.order if not byID else task.id, name=task.name, days=days
+                ),
                 Fore.RESET + Back.RESET,
             )
 
@@ -158,11 +166,6 @@ class Logger:
                     name=deadline.name,
                     date=convertDate(
                         deadline.date,
-                        # verbose=not (
-                        #     (deadline.date - datetime.datetime.now())
-                        #     > datetime.timedelta(hours=24)
-                        # ),
-                        verbose=False,
                     ),
                 ),
                 Fore.RESET,

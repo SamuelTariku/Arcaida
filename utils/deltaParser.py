@@ -43,7 +43,7 @@ def calculateDate(time_str):
 #         return humanize.naturaldelta(delta)
 
 
-def convertDate(date, verbose=False):
+def convertDate(date):
     delta = date - datetime.now()
     totalSeconds = delta.total_seconds()
 

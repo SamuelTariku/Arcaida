@@ -1,4 +1,6 @@
 import datetime
+
+import humanize
 from cli.project_view_cli import ProjectViewCLI
 from models.task_model import Status, Task
 from peewee import DoesNotExist
@@ -131,7 +133,7 @@ class BaseCLI(CLI):
                     highlight=True,
                 )
                 print("-" * 68)
-                Logger.task(current[0], noHighlight=True, noOrder=True)
+                Logger.task(current[0], noHighlight=True, noIndex=True)
                 print()
             else:
                 Logger.project(project, complete)
@@ -150,7 +152,7 @@ class BaseCLI(CLI):
         complete = task_service.getCompletionForProject(current[0].project.id)
         Logger.project(current[0].project, complete)
         print("-" * 68)
-        Logger.task(current[0], noHighlight=True, noOrder=True)
+        Logger.task(current[0], noHighlight=True, noIndex=True)
         print("" * 68)
         print()
 
@@ -286,8 +288,12 @@ class BaseCLI(CLI):
         logs.execute()
 
     def doneCommand(self, args=[]):
+        logs = LogCollection()
+
         currentTaskQuery = task_service.findAllTaskStatus(Status.IN_PROGRESS.value)
         if len(currentTaskQuery) == 0:
+            self.showScreen()
+            logs.execute()
             Logger.error("No current task set!")
             return
 
@@ -297,35 +303,33 @@ class BaseCLI(CLI):
             Status.BACKLOG.value, currentTask.project.id
         )
 
-        print()
-        print(
+        logs.info(
             "Completion Time: {}".format(
-                convertDate(currentTask.startDate, verbose=False)
-            )
+                humanize.naturaldelta(datetime.datetime.now() - currentTask.startDate)
+            ),
         )
-        print()
 
-        Logger.info("Setting Task '{}' to DONE...".format(currentTask.name))
+        logs.info("Setting Task '{}' to DONE...".format(currentTask.name))
         task_service.updateStatus(currentTask, Status.DONE.value)
 
         if len(todoTasksQuery) == 0:
-            print()
-            # self.viewCommand()
-            print()
-            Logger.success("All tasks in project completed!")
-            Logger.celebrate("Project")
-            Logger.celebrate("Completed!")
-            Logger.info("Setting project to inactive...")
+            logs.success("All tasks in project completed!")
+            # logs.celebrate("Project Completed")
+            # logs.info("Setting project to inactive...")
             project_service.updateProjectStatus(currentTask.project.id, False)
-            Logger.success("Project set to inactive!")
+            logs.success("Project set to inactive!")
+
+            self.showScreen()
+            logs.execute()
             return
 
         firstTodo = todoTasksQuery[0]
-        Logger.info("Setting Task '{}' to IN-PROGRESS...".format(firstTodo.name))
+        logs.info("Setting Task '{}' to IN-PROGRESS...".format(firstTodo.name))
         task_service.updateStatus(firstTodo, Status.IN_PROGRESS.value)
-        Logger.success("Tasks have been updated!")
+        logs.success("Tasks have been updated!")
 
-        self.viewCommand()
+        self.showScreen()
+        logs.execute()
 
     def checkInactiveCommand(self, indent=False, args=[]):
         currentTaskQuery = task_service.findAllTaskStatus(Status.IN_PROGRESS.value)

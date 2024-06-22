@@ -18,9 +18,9 @@ class Task(Model):
     status = IntegerField(default=1)
     project = ForeignKeyField(Project, backref="tasks", on_delete="CASCADE")
     order = IntegerField(null=True)
-    deadline = ForeignKeyField(
-        Deadline, null=True, backref="tasks", on_delete="CASCADE"
-    )
+    # deadline = ForeignKeyField(
+    #     Deadline, null=True, backref="tasks", on_delete="CASCADE"
+    # )
     startDate = DateTimeField(null=True)
     endDate = DateTimeField(null=True)
     created = DateTimeField(default=datetime.datetime.now)

@@ -1,4 +1,6 @@
 from models.deadline_model import Deadline, DeadlineStates
+from models.task_deadline_model import TaskDeadline
+from models.task_model import Status, Task
 
 
 def createDeadline(name, date):
@@ -38,7 +40,6 @@ def updateDeadline(id, name=None, date=None):
 def updateState(id, state):
     deadline = Deadline.get_by_id(id)
 
-
     deadline.state = state
 
     deadline.save()
@@ -54,3 +55,37 @@ def deleteAllDeadline():
 def deleteOneDeadline(id):
     query = Deadline.delete().where(Deadline.id == id)
     return query.execute()
+
+
+def addTask(id, taskID):
+    newTaskDeadline = TaskDeadline.create(task=taskID, deadline=id)
+    newTaskDeadline.save()
+
+    return newTaskDeadline
+
+
+def getAllTaskDeadlines(id):
+    return Task.select().join(TaskDeadline).where(TaskDeadline.deadline == id)
+
+
+def getOneTaskDeadlines(id, taskID):
+    return TaskDeadline.select().where(
+        (TaskDeadline.deadline == id) & (TaskDeadline.task == taskID)
+    )
+
+
+def getCompletion(id):
+
+    total_tasks = getAllTaskDeadlines(id).count()
+
+    if total_tasks == 0:
+        return 0.0
+
+    complete_tasks = (
+        TaskDeadline.select()
+        .join(Task)
+        .where((TaskDeadline.deadline == id) & ((Task.status == Status.DONE.value)))
+        .count()
+    )
+
+    return complete_tasks / total_tasks

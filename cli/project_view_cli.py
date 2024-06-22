@@ -5,6 +5,8 @@ from utils.deltaParser import calculateDate, convertDate
 from services import task_service, deadline_service, project_service
 from models.task_model import Status
 
+from peewee import IntegrityError
+
 # from colorama import Fore, Back
 
 
@@ -27,6 +29,7 @@ class ProjectViewCLI(CLI):
                 Command("reorder", self.reorderTaskCommand),
                 Command("activate", self.activateCommand),
                 Command("deactivate", self.deactivateCommand),
+                Command("assign", self.assignDeadlineCommand, 1),
             ]
         )
         self.showScreen()
@@ -35,6 +38,7 @@ class ProjectViewCLI(CLI):
         Logger.clear()
         Logger.header()
         Logger.heading("Project {}".format(self.project.name))
+
         self.viewTaskCommand()
 
     def createTaskCommand(self, args):
@@ -149,11 +153,7 @@ class ProjectViewCLI(CLI):
                 todoTasksCount = todoTasks.count() - 1
             else:
                 todoTasksCount = todoTasks.count()
-                logs.info(
-                    "Completion Time: {}".format(
-                        convertDate(task.startDate, verbose=False)
-                    )
-                )
+                logs.info("Completion Time: {}".format(convertDate(task.startDate)))
 
             if todoTasksCount == 0:
                 logs.success("All tasks in project completed!")
@@ -225,22 +225,30 @@ class ProjectViewCLI(CLI):
         Logger.success("Tasks have been reordered")
 
     def assignDeadlineCommand(self, args):
-        # deadline 2 4 5 2
-        self.showScreen()
+        # deadline 2 4 5
+
+        logs = LogCollection()
+
         tasks = task_service.getManyTask(self.project.id, args)
 
         if len(tasks) == 0:
-
+            self.showScreen()
+            logs.execute()
             Logger.error("There is no task with that order")
             return
         # show deadlines viewer
         deadlines = deadline_service.getAllDeadline()
 
         if len(deadlines) == 0:
-
+            self.showScreen()
+            logs.execute()
             Logger.error("No deadlines created!")
             return
 
+        # Deadline Select Screen
+        Logger.clear()
+        Logger.header()
+        Logger.heading("Select a deadline")
         print()
         for deadline in deadlines:
             print(
@@ -249,25 +257,44 @@ class ProjectViewCLI(CLI):
                 )
             )
         print()
-
         deadlineID = input("select>")
 
         if not deadlineID.isnumeric():
-
+            self.showScreen()
+            logs.execute()
             Logger.error("deadline id incorrect!")
             return
 
         selectedDeadline = deadline_service.getOneDeadline(deadlineID)
 
         if selectedDeadline == None:
+            self.showScreen()
+            logs.execute()
             Logger.error("There is no deadline with that id")
             return
 
         # assign deadline to all passed tasks
         for task in tasks:
-            task.deadline = selectedDeadline
-            task.save()
-        Logger.info("deadline " + selectedDeadline.name)
+            try:
+                deadline_service.addTask(selectedDeadline.id, task.id)
+            except IntegrityError:
+                logs.warn("Task " + str(task.id) + " is already assigned to deadline")
+            except Exception as e:
+                self.showScreen()
+                logs.execute()
+                Logger.error(e)
+                return
+            else:
+                logs.info(
+                    str(len(tasks))
+                    + " tasks assigned to '"
+                    + selectedDeadline.name
+                    + "'"
+                )
+                logs.success("Tasks have been added to the deadline")
+
+        self.showScreen()
+        logs.execute()
 
     def activateCommand(self, args=[]):
         self.showScreen()

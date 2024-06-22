@@ -1,4 +1,5 @@
 import datetime
+from cli.deadline_view_cli import DeadlineViewCLI
 from models.deadline_model import DeadlineStates
 from services import deadline_service
 from utils.simple_cli import *
@@ -12,7 +13,7 @@ class DeadlineCLI(CLI):
         self.commands = self.generateCommandDict(
             [
                 Command("create", self.createDeadlineCommand, 1),
-                Command("view", self.viewDeadlineCommand),
+                Command("open", self.openDeadlineCommand, 1),
                 Command("rename", self.renameDeadlineCommand, 2),
                 Command("update", self.updateDeadlineCommand, 2),
                 Command("clear", self.clearDeadlineCommand),
@@ -43,6 +44,20 @@ class DeadlineCLI(CLI):
             self.showScreen()
             Logger.info("Deadline Name: {name}".format(name=newDeadline.name))
             Logger.success("Deadline is created!")
+
+    def openDeadlineCommand(self, args):
+        deadline = deadline_service.getOneDeadline(args[0])
+
+        deadlineView = DeadlineViewCLI(deadline)
+
+        close = deadlineView.run()
+
+        if close:
+            self.close()
+        else:
+            self.showScreen()
+
+        return close
 
     def viewDeadlineCommand(self, args=[]):
         pendingDeadlines = deadline_service.findAllDeadlineState(
