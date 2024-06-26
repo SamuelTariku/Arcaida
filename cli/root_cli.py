@@ -13,7 +13,6 @@ from services import project_service, task_service, deadline_service
 from utils.config import INACTIVE_DAYS
 from models.deadline_model import DeadlineStates
 
-
 class BaseCLI(CLI):
     def __init__(self) -> None:
         super().__init__()
@@ -67,7 +66,7 @@ class BaseCLI(CLI):
 
     def openProjectsCommand(self, args=[]):
         projectCLI = ProjectCLI()
-
+        
         close = projectCLI.run()
         if close:
             self.close()

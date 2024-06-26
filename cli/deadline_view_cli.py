@@ -11,7 +11,12 @@ class DeadlineViewCLI(CLI):
 
         self.deadline = deadline
         self.prompt = "~Deadline {}".format(deadline.id)
-        self.commands = self.generateCommandDict([])
+        self.commands = self.generateCommandDict(
+            [
+                Command("remove", self.unassignCommand, 1),
+                Command("clear", self.clearCommand),
+            ]
+        )
         self.showScreen()
 
     def showScreen(self):
@@ -36,10 +41,30 @@ class DeadlineViewCLI(CLI):
 
     def listTasks(self):
 
-        tasks = deadline_service.getAllTaskDeadlines(self.deadline.id)
+        tasks = deadline_service.getAllTasksForDeadline(self.deadline.id)
 
         for task in tasks:
             Logger.task(task, byID=True)
-            
-    
-    
+
+    def unassignCommand(self, args):
+        # Expects a task id --> converts it to a task_deadline id
+        remove = deadline_service.deleteOneTaskDeadline(self.deadline.id, args[0])
+        self.showScreen()
+        Logger.info("Number of tasks unassigned to deadline: {num}".format(num=remove))
+        if remove:
+            Logger.success("Tasks have been unassigned!")
+            return
+
+    def clearCommand(self, args=[]):
+        clear = deadline_service.deleteAllTasksForDeadline(self.deadline.id)
+        self.showScreen()
+        Logger.info("Number of tasks unassigned to deadline: {num}".format(num=clear))
+        if clear:
+            Logger.success("Tasks have been unassigned!")
+            return
+
+    def switchCommand(self):
+        pass
+
+    def doneCommand(self):
+        pass

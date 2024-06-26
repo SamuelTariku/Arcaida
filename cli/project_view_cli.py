@@ -284,15 +284,10 @@ class ProjectViewCLI(CLI):
                 logs.execute()
                 Logger.error(e)
                 return
-            else:
-                logs.info(
-                    str(len(tasks))
-                    + " tasks assigned to '"
-                    + selectedDeadline.name
-                    + "'"
-                )
-                logs.success("Tasks have been added to the deadline")
-
+        logs.info(
+            str(len(tasks)) + " tasks assigned to '" + selectedDeadline.name + "'"
+        )
+        logs.success("Tasks have been added to the deadline")
         self.showScreen()
         logs.execute()
 

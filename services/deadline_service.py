@@ -64,19 +64,23 @@ def addTask(id, taskID):
     return newTaskDeadline
 
 
-def getAllTaskDeadlines(id):
+def getAllTasksForDeadline(id):
     return Task.select().join(TaskDeadline).where(TaskDeadline.deadline == id)
 
 
-def getOneTaskDeadlines(id, taskID):
+def getAllDeadlinesForTask(id):
+    return Task.select().join(TaskDeadline).where(TaskDeadline.task == id)
+
+
+def getOneTaskDeadline(deadlineID, taskID):
     return TaskDeadline.select().where(
-        (TaskDeadline.deadline == id) & (TaskDeadline.task == taskID)
+        (TaskDeadline.deadline == deadlineID) & (TaskDeadline.task == taskID)
     )
 
 
 def getCompletion(id):
 
-    total_tasks = getAllTaskDeadlines(id).count()
+    total_tasks = getAllTasksForDeadline(id).count()
 
     if total_tasks == 0:
         return 0.0
@@ -89,3 +93,30 @@ def getCompletion(id):
     )
 
     return complete_tasks / total_tasks
+
+
+def deleteAllTaskDeadlines():
+    query = TaskDeadline.delete()
+    return query.execute()
+
+
+def deleteOneTaskDeadlineById(id):
+    query = TaskDeadline.delete().where((TaskDeadline.id == id))
+    return query.execute()
+
+
+def deleteOneTaskDeadline(deadlineID, taskID):
+    query = TaskDeadline.delete().where(
+        (TaskDeadline.deadline == deadlineID) & (TaskDeadline.task == taskID)
+    )
+    return query.execute()
+
+
+def deleteAllTasksForDeadline(id):
+    query = TaskDeadline.delete().where((TaskDeadline.deadline == id))
+    return query.execute()
+
+
+def deleteAllDeadlinesForTask(id):
+    query = TaskDeadline.delete().where((TaskDeadline.task == id))
+    return query.execute()

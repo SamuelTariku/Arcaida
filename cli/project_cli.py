@@ -61,18 +61,24 @@ class ProjectCLI(CLI):
 
     def clearAllProjectCommand(self, args=[]):
         clear = project_service.deleteAllProject()
+
+        self.showScreen()
+        Logger.info("Number of projects deleted: {num}".format(num=clear))
+
         if clear:
-            self.showScreen()
-            Logger.info("Number of projects deleted: {num}".format(num=clear))
             Logger.success("All projects have been deleted!")
+        else:
+            Logger.error("Unable to remove all projects")
 
     def removeProjectCommand(self, args):
         remove = project_service.deleteOneProject(args[0])
 
+        self.showScreen()
+        Logger.info("Number of projects deleted: {num}".format(num=remove))
         if remove:
-            self.showScreen()
-            Logger.info("Number of projects deleted: {num}".format(num=remove))
             Logger.success("Project has been deleted!")
+        else:
+            Logger.error("Unable to remove project")
 
     def openProjectCommand(self, args):
         project = project_service.getOneProject(args[0])
