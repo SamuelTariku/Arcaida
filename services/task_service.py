@@ -172,6 +172,9 @@ def reassignOrder(projectID):
         )
     )
 
+def checkActive(projectID):
+    pass
+
 
 def updateOrder(projectID, current, destination):
 

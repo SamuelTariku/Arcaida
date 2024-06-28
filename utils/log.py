@@ -146,7 +146,7 @@ class Logger:
                 completedText = "LATE"
 
         elif deadline.state == DeadlineStates.COMPLETE.value:
-            preColorSet = Fore.BLACK
+            preColorSet = Fore.LIGHTBLACK_EX
             completed = True
             completedText = "COMPLETE"
 

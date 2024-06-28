@@ -65,11 +65,27 @@ def addTask(id, taskID):
 
 
 def getAllTasksForDeadline(id):
-    return Task.select().join(TaskDeadline).where(TaskDeadline.deadline == id)
+    return (
+        Task.select()
+        .join(TaskDeadline)
+        .where(TaskDeadline.deadline == id)
+        .order_by(TaskDeadline.task)
+    )
+
+
+def getTasksForDeadlineByStatus(id, status):
+    return (
+        Task.select()
+        .join(TaskDeadline)
+        .where(
+            (TaskDeadline.deadline == id) & (Task.status == status)
+        )
+        .order_by(TaskDeadline.task)
+    )
 
 
 def getAllDeadlinesForTask(id):
-    return Task.select().join(TaskDeadline).where(TaskDeadline.task == id)
+    return Deadline.select().join(TaskDeadline).where(TaskDeadline.task == id)
 
 
 def getOneTaskDeadline(deadlineID, taskID):

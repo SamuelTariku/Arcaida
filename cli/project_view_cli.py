@@ -127,7 +127,7 @@ class ProjectViewCLI(CLI):
                 if replace.lower() == "y":
                     # just in case idk
                     for currentTask in currentTasks:
-                        currentTask.state = Status.BACKLOG.value
+                        # currentTask.state = Status.BACKLOG.value
                         task_service.updateStatus(currentTask, Status.BACKLOG.value)
                 else:
                     self.showScreen()
@@ -135,9 +135,8 @@ class ProjectViewCLI(CLI):
                     return
             # Set the project to active
             if not task.project.active:
-                logs.info("Set project to active...")
                 project_service.updateProjectStatus(task.project.id, True)
-                logs.success("Project is active!")
+                logs.info("Project is active")
 
             status = Status.IN_PROGRESS.value
 
@@ -157,9 +156,8 @@ class ProjectViewCLI(CLI):
 
             if todoTasksCount == 0:
                 logs.success("All tasks in project completed!")
-                logs.info("Setting project to inactive...")
                 project_service.updateProjectStatus(task.project.id, False)
-                logs.success("Project set to inactive!")
+                logs.info("Project set to inactive")
 
             status = Status.DONE.value
         else:
@@ -171,8 +169,8 @@ class ProjectViewCLI(CLI):
         update = task_service.updateStatus(task, status=status)
         if update:
             logs.info("Task Name: {name}".format(name=task.name))
-            logs.success(
-                "Task status is set to {status}!".format(status=Status(status).name)
+            logs.info(
+                "Task status is set to {status}".format(status=Status(status).name)
             )
 
         self.showScreen()
