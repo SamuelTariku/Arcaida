@@ -1,7 +1,7 @@
 import datetime
 from utils.simple_cli import *
 from utils.log import Logger, LogCollection
-from utils.deltaParser import calculateDate, convertDate
+from utils.dateUtils import calculateDate, convertDate
 from services import task_service, deadline_service, project_service
 from models.task_model import Status
 

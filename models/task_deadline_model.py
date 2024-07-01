@@ -6,10 +6,13 @@ from utils.config import database
 
 
 class TaskDeadline(Model):
-    task = deadline = ForeignKeyField(Task, backref="deadlines", on_delete="CASCADE")
-    deadline = ForeignKeyField(Deadline, backref="tasks", on_delete="CASCADE")
+    task = ForeignKeyField(
+        Task, backref="deadlines", on_delete="CASCADE", on_update="CASCADE"
+    )
+    deadline = ForeignKeyField(
+        Deadline, backref="tasks", on_delete="CASCADE", on_update="CASCADE"
+    )
 
     class Meta:
         database = database
         indexes = ((("task", "deadline"), True),)
-    

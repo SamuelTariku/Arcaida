@@ -1,10 +1,21 @@
 from models.deadline_model import Deadline, DeadlineStates
 from models.task_deadline_model import TaskDeadline
 from models.task_model import Status, Task
+from utils.config import database
+
+
+def checkFixedDeadline(id):
+    return int(id) not in (1, 2, 3)
 
 
 def createDeadline(name, date):
     newDeadline = Deadline.create(name=name, date=date)
+    newDeadline.save()
+    return newDeadline
+
+
+def createFixedDeadline(id, name, date):
+    newDeadline = Deadline.create(id=id, name=name, date=date)
     newDeadline.save()
     return newDeadline
 
@@ -47,8 +58,18 @@ def updateState(id, state):
     return deadline
 
 
+def moveDeadlineLast(id):
+    database.execute_sql(
+        """
+        update deadline set id = (select max(id) from deadline) + 1 where id = {}
+        """.format(
+            id
+        )
+    )
+
+
 def deleteAllDeadline():
-    query = Deadline.delete()
+    query = Deadline.delete().where(Deadline.id not in (1, 2, 3))
     return query.execute()
 
 
@@ -77,9 +98,7 @@ def getTasksForDeadlineByStatus(id, status):
     return (
         Task.select()
         .join(TaskDeadline)
-        .where(
-            (TaskDeadline.deadline == id) & (Task.status == status)
-        )
+        .where((TaskDeadline.deadline == id) & (Task.status == status))
         .order_by(TaskDeadline.task)
     )
 

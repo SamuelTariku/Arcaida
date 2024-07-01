@@ -1,10 +1,10 @@
-import datetime
+from datetime import datetime, timedelta
 
 import humanize
 from cli.project_view_cli import ProjectViewCLI
 from models.task_model import Status, Task
 from peewee import DoesNotExist
-from utils.deltaParser import convertDate
+from utils.dateUtils import calculateDate, convertDate
 from utils.log import LogCollection
 from utils.simple_cli import *
 from cli.project_cli import ProjectCLI
@@ -12,6 +12,7 @@ from cli.deadline_cli import DeadlineCLI
 from services import project_service, task_service, deadline_service
 from utils.config import INACTIVE_DAYS
 from models.deadline_model import DeadlineStates
+
 
 class BaseCLI(CLI):
     def __init__(self) -> None:
@@ -33,7 +34,16 @@ class BaseCLI(CLI):
                 Command("deactivate", self.deactivateCommand, 1),
             ]
         )
+
+        # Show logs and screen
         self.showScreen()
+
+        # Startup tasks
+        self.FixedDeadline(1, "today", timedelta(hours=24 - datetime.now().hour))
+        self.FixedDeadline(2, "tomorrow", timedelta(hours=48 - datetime.now().hour))
+        self.FixedDeadline(
+            3, "this week", timedelta(days=7 - datetime.today().weekday())
+        )
 
     def showScreen(self):
 
@@ -64,9 +74,47 @@ class BaseCLI(CLI):
         # self.listDeadlinesCommand()
         # print()
 
+    # TODO: Make more independent when refactoring
+    def FixedDeadline(self, id, name, timeDelta):
+
+        logs = LogCollection()
+
+        fixedDeadline = deadline_service.getOneDeadline(id)
+        # fixedEnd = calculateDate(time_str)
+        fixedEnd = datetime.now() + timeDelta
+
+        # Check if deadline id id is available
+        if fixedDeadline == None:
+            logs.info("Fixed deadline '{}' not found".format(name))
+            logs.info("Creating fixed deadline")
+            fixedDeadline = deadline_service.createFixedDeadline(id, name, fixedEnd)
+        # Check if deadline name is correct
+        elif fixedDeadline.name != name:
+            logs.info("Fixed deadline '{}' has been modified".format(name))
+            logs.info("Moving altered deadline to last row")
+            deadline_service.moveDeadlineLast(id)
+            logs.info("Creating fixed deadline")
+            fixedDeadline = deadline_service.createFixedDeadline(id, name, fixedEnd)
+
+        # Check if deadline has passed
+        elif fixedDeadline.date < datetime.now():
+            # TODO: Add reward for user when deadline is been completed
+            # Check if deadline has been completed
+            if fixedDeadline.state == DeadlineStates.COMPLETE.value:
+                logs.info("Fixed deadline '{}' has been completed".format(name))
+                logs.info("New fixed deadline has been created")
+                deadline_service.updateState(id, DeadlineStates.PENDING.value)
+            else:
+                logs.info("Fixed deadline has been not completed")
+
+            deadline_service.updateDeadline(id, date=fixedEnd)
+            deadline_service.deleteAllTasksForDeadline(id)
+
+        logs.execute()
+
     def openProjectsCommand(self, args=[]):
         projectCLI = ProjectCLI()
-        
+
         close = projectCLI.run()
         if close:
             self.close()
@@ -304,7 +352,7 @@ class BaseCLI(CLI):
 
         logs.info(
             "Completion Time: {}".format(
-                humanize.naturaldelta(datetime.datetime.now() - currentTask.startDate)
+                humanize.naturaldelta(datetime.now() - currentTask.startDate)
             ),
         )
 
@@ -347,14 +395,14 @@ class BaseCLI(CLI):
 
         for project in activeProjects:
             # Check if the project has remained active for long enough
-            elapsed = datetime.datetime.now() - project.updated
+            elapsed = datetime.now() - project.updated
             if elapsed < datetime.timedelta(days=INACTIVE_DAYS):
                 continue
 
             if currentTask != None:
                 if currentTask.project.id == project.id:
                     # Check how long the current task hasn't been completed
-                    elapsed = datetime.datetime.now() - currentTask.startDate
+                    elapsed = datetime.now() - currentTask.startDate
                     if elapsed > datetime.timedelta(days=INACTIVE_DAYS):
                         Logger.info(
                             "Project '{}' has not been updated for {} days".format(
@@ -399,7 +447,7 @@ class BaseCLI(CLI):
 
             # Check when the last task was completed
             lastDoneTask = DoneTasks[0]
-            elapsed = datetime.datetime.now() - lastDoneTask.endDate
+            elapsed = datetime.now() - lastDoneTask.endDate
             if elapsed > datetime.timedelta(days=INACTIVE_DAYS):
                 Logger.info(
                     "Project '{}' has not been updated for {} days".format(
@@ -431,7 +479,7 @@ class BaseCLI(CLI):
         highest = None
         days = {}
         for task in DoneTasks:
-            if task.endDate.date() == datetime.datetime.now().date():
+            if task.endDate.date() == datetime.now().date():
                 today += 1
                 continue
 
@@ -515,4 +563,4 @@ class BaseCLI(CLI):
         else:
             self.showScreen()
 
-        return close
+        return clos

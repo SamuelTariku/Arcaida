@@ -3,7 +3,7 @@ from cli.deadline_view_cli import DeadlineViewCLI
 from models.deadline_model import DeadlineStates
 from services import deadline_service
 from utils.simple_cli import *
-from utils.deltaParser import calculateDate, convertDate
+from utils.dateUtils import calculateDate, convertDate
 
 
 class DeadlineCLI(CLI):
@@ -77,6 +77,13 @@ class DeadlineCLI(CLI):
         print()
 
     def renameDeadlineCommand(self, args=[]):
+
+        checkFixed = deadline_service.checkFixedDeadline(args[0])
+        if not checkFixed:
+            self.showScreen()
+            Logger.error("Fixed Deadline cannot be modified")
+            return
+
         rename = deadline_service.updateDeadline(args[0], name=" ".join(args[1::]))
 
         if rename:
@@ -85,6 +92,13 @@ class DeadlineCLI(CLI):
             Logger.success("Deadline Name is updated!")
 
     def updateDeadlineCommand(self, args=[]):
+
+        checkFixed = deadline_service.checkFixedDeadline(args[0])
+
+        if not checkFixed:
+            self.showScreen()
+            Logger.error("Fixed Deadline cannot be modified")
+            return
         deadlineDate = calculateDate(args[1])
         date = deadline_service.updateDeadline(args[0], date=deadlineDate)
 
@@ -96,12 +110,20 @@ class DeadlineCLI(CLI):
     def clearDeadlineCommand(self, args=[]):
         clear = deadline_service.deleteAllDeadline()
 
+        self.showScreen()
         if clear:
-            self.showScreen()
             Logger.info("Number of deadlines deleted: {num}".format(num=clear))
             Logger.success("All deadlines have been deleted!")
+        else:
+            Logger.info("Number of deadlines deleted: {num}".format(num=clear))
 
     def removeDeadlineCommand(self, args=[]):
+        checkFixed = deadline_service.checkFixedDeadline(args[0])
+        if not checkFixed:
+            self.showScreen()
+            Logger.error("Fixed Deadline cannot be modified")
+            return
+
         remove = deadline_service.deleteOneDeadline(args[0])
 
         if remove:

@@ -6,7 +6,7 @@ import humanize
 from art import tprint
 import os
 
-from utils.deltaParser import convertDate
+from utils.dateUtils import convertDate
 
 
 class LogCollection:

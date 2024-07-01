@@ -3,7 +3,6 @@ import humanize
 from string import Formatter
 from datetime import datetime, timedelta
 
-
 regex = re.compile(
     r"((?P<days>\d+?)d)?((?P<hours>\d+?)h)?((?P<minutes>\d+?)m)?((?P<seconds>\d+?)s)?"
 )
@@ -27,7 +26,7 @@ def calculateDate(time_str):
 
     if addedTime == timedelta():
         return
-    print(currentDate, addedTime, currentDate + addedTime)
+    # print(currentDate, addedTime, currentDate + addedTime)
     return currentDate + addedTime
 
 
@@ -47,20 +46,20 @@ def convertDate(date):
     delta = date - datetime.now()
     totalSeconds = delta.total_seconds()
 
-    weeks, remainder = divmod(totalSeconds, 604800)
+    weeks, remainder = divmod(totalSeconds, 604000)
     days, remainder = divmod(totalSeconds, 86400)
     hours, remainder = divmod(totalSeconds, 3600)
     minutes, remainder = divmod(totalSeconds, 60)
 
-    if weeks > 1:
+    if weeks >= 1:
         return "{}w".format(int(weeks))
-    elif days > 1:
+    elif days >= 1:
         return "{}d".format(int(days))
-    elif hours > 1:
+    elif hours >= 1:
         return "{}h".format(int(hours))
-    elif minutes > 1:
+    elif minutes >= 1:
         return "{}m".format(int(minutes))
-    elif totalSeconds > 1:
+    elif totalSeconds >= 1:
         return "{}s".format(totalSeconds)
     else:
         return "0s"

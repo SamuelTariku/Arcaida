@@ -3,7 +3,7 @@ import humanize
 from peewee import DoesNotExist
 from models.deadline_model import DeadlineStates
 from models.task_model import Status
-from utils.deltaParser import convertDate
+from utils.dateUtils import convertDate
 from utils.simple_cli import *
 from utils.log import Logger, LogCollection
 
