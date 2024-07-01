@@ -1,9 +1,10 @@
+import humanize
 import datetime
 from cli.deadline_view_cli import DeadlineViewCLI
 from models.deadline_model import DeadlineStates
 from services import deadline_service
 from utils.simple_cli import *
-from utils.dateUtils import calculateDate, convertDate
+from utils.dateUtils import calculateDate, convertDate, parse_time
 
 
 class DeadlineCLI(CLI):
@@ -16,6 +17,7 @@ class DeadlineCLI(CLI):
                 Command("open", self.openDeadlineCommand, 1),
                 Command("rename", self.renameDeadlineCommand, 2),
                 Command("update", self.updateDeadlineCommand, 2),
+                Command("delay", self.delayDeadlineCommand, 2),
                 Command("clear", self.clearDeadlineCommand),
                 Command("remove", self.removeDeadlineCommand, 1),
             ]
@@ -106,6 +108,30 @@ class DeadlineCLI(CLI):
             self.showScreen()
             Logger.info("Deadline Date: {date}".format(date=convertDate(deadlineDate)))
             Logger.success("Deadline Date is updated!")
+
+    def delayDeadlineCommand(self, args=[]):
+
+        checkFixed = deadline_service.checkFixedDeadline(args[0])
+
+        if not checkFixed:
+            self.showScreen()
+            Logger.error("Fixed Deadline cannot be modified")
+            return
+        deadlineDelay = parse_time(args[1])
+
+        newDeadline = deadline_service.delayDeadline(args[0], timeDelta=deadlineDelay)
+
+        if newDeadline:
+            self.showScreen()
+            Logger.info(
+                "Deadline Date: {date}".format(
+                    date=humanize.naturaltime(newDeadline.date)
+                )
+            )
+            Logger.success("Deadline Date is updated!")
+        else:
+            self.showScreen()
+            Logger.error("Unable to update deadline")
 
     def clearDeadlineCommand(self, args=[]):
         clear = deadline_service.deleteAllDeadline()

@@ -48,6 +48,16 @@ def updateDeadline(id, name=None, date=None):
     return deadline
 
 
+def delayDeadline(id, timeDelta):
+    deadline = Deadline.get_by_id(id)
+
+    deadline.date += timeDelta
+
+    deadline.save()
+
+    return deadline
+
+
 def updateState(id, state):
     deadline = Deadline.get_by_id(id)
 

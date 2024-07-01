@@ -3,7 +3,7 @@ import humanize
 from peewee import DoesNotExist
 from models.deadline_model import DeadlineStates
 from models.task_model import Status
-from utils.dateUtils import convertDate
+from utils.dateUtils import convertDate, parse_time
 from utils.simple_cli import *
 from utils.log import Logger, LogCollection
 
@@ -22,6 +22,7 @@ class DeadlineViewCLI(CLI):
                 Command("clear", self.clearCommand),
                 Command("switch", self.switchCommand),
                 Command("done", self.doneCommand),
+                Command("delay", self.delayDeadlineCommand, 1),
             ]
         )
         self.showScreen()
@@ -138,7 +139,7 @@ class DeadlineViewCLI(CLI):
             reactivate = input("reactivate? (y/N)>")
 
             if reactivate.lower() == "y":
-                deadline_service.updateState(
+                self.deadline = deadline_service.updateState(
                     self.deadline.id, DeadlineStates.PENDING.value
                 )
             else:
@@ -216,3 +217,30 @@ class DeadlineViewCLI(CLI):
 
         self.showScreen()
         logs.execute()
+
+    def delayDeadlineCommand(self, args=[]):
+
+        checkFixed = deadline_service.checkFixedDeadline(self.deadline.id)
+
+        if not checkFixed:
+            self.showScreen()
+            Logger.error("Fixed Deadline cannot be modified")
+            return
+        deadlineDelay = parse_time(args[0])
+
+        newDeadline = deadline_service.delayDeadline(
+            self.deadline.id, timeDelta=deadlineDelay
+        )
+
+        if newDeadline:
+            self.deadline = newDeadline
+            self.showScreen()
+            Logger.info(
+                "Deadline Date: {date}".format(
+                    date=humanize.naturaltime(newDeadline.date)
+                )
+            )
+            Logger.success("Deadline Date is updated!")
+        else:
+            self.showScreen()
+            Logger.error("Unable to update deadline")
