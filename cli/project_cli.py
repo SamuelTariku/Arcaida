@@ -1,3 +1,4 @@
+from models.task_model import Status
 from utils.simple_cli import *
 from services import project_service, task_service
 from utils.log import Logger
@@ -102,15 +103,24 @@ class ProjectCLI(CLI):
                     Logger.error("Project {} is already complete!".format(arg))
                     return
 
+                backlogs = task_service.findAllTaskStatusForProject(
+                    Status.BACKLOG.value, arg
+                ).count()
+                if backlogs == 0:
+                    self.showScreen()
+                    Logger.error("Project {} has no backlog tasks!".format(arg))
+                    return
+
                 update = project_service.updateProjectStatus(arg, True)
                 if update:
                     self.showScreen()
                     Logger.success(
                         "Project {name} is set to active!".format(name=update.name)
                     )
-            except:
+            except Exception as e:
                 self.showScreen()
                 Logger.error("Cannot update project " + arg)
+                Logger.error(e)
 
     def deactivateCommand(self, args):
         for arg in args:

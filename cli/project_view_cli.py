@@ -294,17 +294,21 @@ class ProjectViewCLI(CLI):
         try:
             complete = task_service.getCompletionForProject(self.project.id)
             if complete == 1.0:
-
                 Logger.error("Project {} is already complete!".format(self.project.id))
                 return
-
+            backlogs = task_service.findAllTaskStatusForProject(
+                Status.BACKLOG.value, self.project.id
+            ).count()
+            if backlogs == 0:
+                Logger.error("Project {} has no backlog tasks!".format(self.project.id))
+                return
             update = project_service.updateProjectStatus(self.project.id, True)
             if update:
                 Logger.success(
                     "Project {name} is set to active!".format(name=update.name)
                 )
         except:
-            Logger.error("Cannot update project " + self.project.id)
+            Logger.error("Cannot update project " + str(self.project.id))
 
     def deactivateCommand(self, args=[]):
         self.showScreen()
