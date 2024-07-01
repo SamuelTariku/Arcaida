@@ -1,3 +1,5 @@
+from peewee import DoesNotExist
+
 from models.task_model import Status
 from utils.simple_cli import *
 from services import project_service, task_service
@@ -52,13 +54,14 @@ class ProjectCLI(CLI):
     def renameProjectCommand(self, args):
         try:
             update = project_service.updateProjectName(args[0], " ".join(args[1::]))
+        except DoesNotExist:
+            self.showScreen()
+            Logger.error("Project doesn't exist")
+            return
 
-            if update:
-                self.showScreen()
-                Logger.success("Project {name} is updated!".format(name=update.name))
-        except Exception as err:
-            Logger.error("Cannot update project!")
-            print(err)
+        if update:
+            self.showScreen()
+            Logger.success("Project {name} is updated!".format(name=update.name))
 
     def clearAllProjectCommand(self, args=[]):
         clear = project_service.deleteAllProject()
@@ -82,7 +85,12 @@ class ProjectCLI(CLI):
             Logger.error("Unable to remove project")
 
     def openProjectCommand(self, args):
-        project = project_service.getOneProject(args[0])
+        try:
+            project = project_service.getOneProject(args[0])
+        except DoesNotExist:
+            self.showScreen()
+            Logger.error("Project doesn't exist")
+            return
 
         projectView = ProjectViewCLI(project)
 
@@ -92,6 +100,7 @@ class ProjectCLI(CLI):
             self.close()
         else:
             self.showScreen()
+
         return close
 
     def activateCommand(self, args):
@@ -117,6 +126,11 @@ class ProjectCLI(CLI):
                     Logger.success(
                         "Project {name} is set to active!".format(name=update.name)
                     )
+
+            except DoesNotExist:
+                self.showScreen()
+                Logger.error("Project doesn't exist")
+                return
             except Exception as e:
                 self.showScreen()
                 Logger.error("Cannot update project " + arg)
@@ -131,6 +145,12 @@ class ProjectCLI(CLI):
                     Logger.success(
                         "Project {name} is set to inactive!".format(name=update.name)
                     )
+
+            except DoesNotExist:
+                self.showScreen()
+                Logger.error("Project doesn't exist")
+                return
+
             except:
                 self.showScreen()
                 Logger.error("Cannot update project " + arg)

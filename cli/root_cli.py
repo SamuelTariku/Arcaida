@@ -79,21 +79,23 @@ class BaseCLI(CLI):
 
         logs = LogCollection()
 
-        fixedDeadline = deadline_service.getOneDeadline(id)
+        try:
+            fixedDeadline = deadline_service.getOneDeadline(id)
+        except DoesNotExist:
+            fixedDeadline = None
+
         # fixedEnd = calculateDate(time_str)
         fixedEnd = datetime.now() + timeDelta
 
         # Check if deadline id id is available
         if fixedDeadline == None:
-            logs.info("Fixed deadline '{}' not found".format(name))
-            logs.info("Creating fixed deadline")
+            logs.info("Creating fixed deadline '{}'".format(name))
             fixedDeadline = deadline_service.createFixedDeadline(id, name, fixedEnd)
         # Check if deadline name is correct
         elif fixedDeadline.name != name:
-            logs.info("Fixed deadline '{}' has been modified".format(name))
-            logs.info("Moving altered deadline to last row")
+            logs.info("Deadline '{}' has been modified".format(name))
+            logs.warn("Moving former deadline {} to last row".format(id))
             deadline_service.moveDeadlineLast(id)
-            logs.info("Creating fixed deadline")
             fixedDeadline = deadline_service.createFixedDeadline(id, name, fixedEnd)
 
         # Check if deadline has passed
@@ -102,7 +104,6 @@ class BaseCLI(CLI):
             # Check if deadline has been completed
             if fixedDeadline.state == DeadlineStates.COMPLETE.value:
                 logs.info("Fixed deadline '{}' has been completed".format(name))
-                logs.info("New fixed deadline has been created")
                 deadline_service.updateState(id, DeadlineStates.PENDING.value)
             else:
                 logs.info("Fixed deadline has been not completed")

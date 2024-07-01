@@ -1,3 +1,5 @@
+from peewee import DoesNotExist
+
 import datetime
 from utils.simple_cli import *
 from utils.log import Logger, LogCollection
@@ -263,8 +265,13 @@ class ProjectViewCLI(CLI):
             Logger.error("deadline id incorrect!")
             return
 
-        selectedDeadline = deadline_service.getOneDeadline(deadlineID)
-
+        try:
+            selectedDeadline = deadline_service.getOneDeadline(deadlineID)
+        except DoesNotExist:
+            self.showScreen()
+            Logger.error("Project doesn't exist")
+            return
+        
         if selectedDeadline == None:
             self.showScreen()
             logs.execute()

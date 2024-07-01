@@ -84,7 +84,7 @@ class Logger:
             days = " "
         elif task.status == Status.IN_PROGRESS.value:
             if not noHighlight:
-                preColorSet = Back.BLUE
+                preColorSet = Fore.CYAN
             days = humanize.naturaldelta(datetime.datetime.now() - task.startDate)
         elif task.status == Status.DONE.value:
             preColorSet = Fore.LIGHTBLACK_EX

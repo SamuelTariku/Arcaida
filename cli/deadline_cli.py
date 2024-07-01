@@ -1,3 +1,4 @@
+from peewee import DoesNotExist
 import humanize
 import datetime
 from cli.deadline_view_cli import DeadlineViewCLI
@@ -48,7 +49,12 @@ class DeadlineCLI(CLI):
             Logger.success("Deadline is created!")
 
     def openDeadlineCommand(self, args):
-        deadline = deadline_service.getOneDeadline(args[0])
+        try:
+            deadline = deadline_service.getOneDeadline(args[0])
+        except DoesNotExist:
+            self.showScreen()
+            Logger.error("Deadline doesn't exist")
+            return
 
         deadlineView = DeadlineViewCLI(deadline)
 
@@ -102,7 +108,13 @@ class DeadlineCLI(CLI):
             Logger.error("Fixed Deadline cannot be modified")
             return
         deadlineDate = calculateDate(args[1])
-        date = deadline_service.updateDeadline(args[0], date=deadlineDate)
+
+        try:
+            date = deadline_service.updateDeadline(args[0], date=deadlineDate)
+        except DoesNotExist:
+            self.showScreen()
+            Logger.error("Project doesn't exist")
+            return
 
         if date:
             self.showScreen()
@@ -118,9 +130,15 @@ class DeadlineCLI(CLI):
             Logger.error("Fixed Deadline cannot be modified")
             return
         deadlineDelay = parse_time(args[1])
-
-        newDeadline = deadline_service.delayDeadline(args[0], timeDelta=deadlineDelay)
-
+        try:
+            newDeadline = deadline_service.delayDeadline(
+                args[0], timeDelta=deadlineDelay
+            )
+        except DoesNotExist:
+            self.showScreen()
+            Logger.error("Project doesn't exist")
+            return
+        
         if newDeadline:
             self.showScreen()
             Logger.info(

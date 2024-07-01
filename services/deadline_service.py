@@ -25,10 +25,7 @@ def getAllDeadline():
 
 
 def getOneDeadline(id):
-    try:
-        return Deadline.get_by_id(id)
-    except:
-        return None
+    return Deadline.get_by_id(id)
 
 
 def findAllDeadlineState(state):
