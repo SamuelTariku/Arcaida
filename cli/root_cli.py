@@ -563,4 +563,4 @@ class BaseCLI(CLI):
         else:
             self.showScreen()
 
-        return clos
+        return close
