@@ -58,17 +58,43 @@ class DeadlineViewCLI(CLI):
 
     def listTasks(self):
 
-        tasks = deadline_service.getAllTasksForDeadline(self.deadline.id)
+        currentDeadlineTask = deadline_service.getTasksForDeadlineByStatus(
+            self.deadline.id, Status.IN_PROGRESS.value
+        )
+        todoDeadlineTasks = deadline_service.getTasksForDeadlineByStatus(
+            self.deadline.id, Status.BACKLOG.value
+        )
 
-        for task in tasks:
-            Logger.task(task, byID=True)
+        for task in currentDeadlineTask:
+            Logger.task(task)
+
+        # TODO: Add pagination to the todo tasks list
+        for task in todoDeadlineTasks:
+            Logger.task(task)
 
     def unassignCommand(self, args):
-        # Expects a task id --> converts it to a task_deadline id
-        remove = deadline_service.deleteOneTaskDeadline(self.deadline.id, args[0])
-        self.showScreen()
+        # Expects a project_id.task_order --> converts it to a task_deadline id
+
+        if "." not in args[0]:
+            self.showScreen()
+            Logger.error("Cannot be in this format")
+            return
+
+        projectNum, orderNum = args[0].split(".")
+
+        task = task_service.getTaskByOrder(projectNum, orderNum)
+
+        if task == None:
+            self.showScreen()
+            Logger.error("There is no task with that order")
+            return
+
+        remove = deadline_service.deleteOneTaskDeadline(self.deadline.id, task.id)
+
         Logger.info("Number of tasks unassigned to deadline: {num}".format(num=remove))
+
         if remove:
+            self.showScreen()
             Logger.success("Tasks have been unassigned!")
             return
 
@@ -92,14 +118,21 @@ class DeadlineViewCLI(CLI):
 
         # Sets next task
         if len(args) != 0:
-            # TODO: Will need to change to the deadline id system later
-            try:
-                nextTask = task_service.getOneTask(args[0])
-            except DoesNotExist:
+            if "." not in args[0]:
+                self.showScreen()
+                Logger.error("Cannot be in this format")
+                return
+
+            projectNum, orderNum = args[0].split(".")
+
+            nextTask = task_service.getTaskByOrder(projectNum, orderNum)
+
+            if nextTask == None:
                 self.showScreen()
                 logs.execute()
-                Logger.error("No task with that id exists!")
+                Logger.error("There is no task with that order")
                 return
+
         else:
             todoDeadlineTasks = deadline_service.getTasksForDeadlineByStatus(
                 self.deadline.id, Status.BACKLOG.value

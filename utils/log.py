@@ -73,11 +73,11 @@ class Logger:
     def info(text, indent=""):
         print(indent, Fore.LIGHTWHITE_EX + "[-]", text, Fore.RESET)
 
-    def task(task, noHighlight=False, noIndex=False, byID=False):
+    def task(task, noHighlight=False, noIndex=False):
         days = ""
         preColorSet = ""
 
-        raw = "{num:>3}. {name:<53} {days}"
+        raw = "{project:>3}.{num:<3} {name:<53} {days}"
         noNumRaw = (" " * 5) + "{name:<53} {days}"
 
         if task.status == Status.BACKLOG.value:
@@ -96,16 +96,14 @@ class Logger:
         if noIndex:
             print(
                 preColorSet
-                + noNumRaw.format(
-                    num=task.order if not byID else task.id, name=task.name, days=days
-                ),
+                + noNumRaw.format(num=task.order, name=task.name, days=days),
                 Fore.RESET + Back.RESET,
             )
         else:
             print(
                 preColorSet
                 + raw.format(
-                    num=task.order if not byID else task.id, name=task.name, days=days
+                    project=task.project.id, num=task.order, name=task.name, days=days
                 ),
                 Fore.RESET + Back.RESET,
             )

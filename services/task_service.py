@@ -11,7 +11,7 @@ def createTask(name, project):
 
     newTask = Task.create(name=name, project=project, order=taskOrder)
     newTask.save()
-    reassignOrder(project.id)
+    # reassignOrder(project.id)
 
     return newTask
 
@@ -131,7 +131,7 @@ def updateStatus(task, status):
 
     task.save()
 
-    reassignOrder(task.project.id)
+    # reassignOrder(task.project.id)
 
     return task
 
@@ -140,7 +140,7 @@ def deleteTask(task):
 
     projectID = task.project
     deleted = task.delete_instance()
-    reassignOrder(projectID)
+    # reassignOrder(projectID)
 
     return deleted
 
@@ -161,7 +161,7 @@ def reassignOrder(projectID):
 	        select (
 		       	select count(*)
 				from task b
-				where project_id=={projectID} and ((a.status == b.status and a.id >= b.id) or (a.status > b.status)) 
+				where project_id=={projectID} and ((a.status == b.status and a.id >= b.id) or (a.status < b.status)) 
 	        ) as num 
 	        from task a 
 	        where project_id == {projectID} and task.id == a.id
@@ -171,6 +171,7 @@ def reassignOrder(projectID):
             projectID=projectID
         )
     )
+
 
 def checkActive(projectID):
     pass

@@ -101,12 +101,14 @@ class BaseCLI(CLI):
         # Check if deadline has passed
         elif fixedDeadline.date < datetime.now():
             # TODO: Add reward for user when deadline is been completed
+            # check to make sure there are tasks assigned here
             # Check if deadline has been completed
             if fixedDeadline.state == DeadlineStates.COMPLETE.value:
-                logs.info("Fixed deadline '{}' has been completed".format(name))
+                # logs.info("Fixed deadline '{}' has been completed".format(name))
                 deadline_service.updateState(id, DeadlineStates.PENDING.value)
             else:
-                logs.info("Fixed deadline has been not completed")
+                # logs.info("Fixed deadline has been not completed")
+                pass
 
             deadline_service.updateDeadline(id, date=fixedEnd)
             deadline_service.deleteAllTasksForDeadline(id)
@@ -553,7 +555,12 @@ class BaseCLI(CLI):
                 Logger.error("Cannot update project " + arg)
 
     def openProjectCommand(self, args):
-        project = project_service.getOneProject(args[0])
+        try:
+            project = project_service.getOneProject(args[0])
+        except DoesNotExist:
+            self.showScreen()
+            Logger.error("Project doesn't exist")
+            return
 
         projectView = ProjectViewCLI(project)
 

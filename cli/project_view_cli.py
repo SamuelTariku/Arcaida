@@ -29,6 +29,7 @@ class ProjectViewCLI(CLI):
                 Command("clear", self.clearAllTaskCommand),
                 Command("remove", self.removeTaskCommand, 1),
                 Command("reorder", self.reorderTaskCommand),
+                Command("move", self.moveTaskCommand, 2),
                 Command("activate", self.activateCommand),
                 Command("deactivate", self.deactivateCommand),
                 Command("assign", self.assignDeadlineCommand, 1),
@@ -80,9 +81,9 @@ class ProjectViewCLI(CLI):
             Logger.success("Tasks have been created!")
 
     def viewTaskCommand(self, args=[]):
-        doneTasks = task_service.findAllTaskStatusForProject(
-            Status.DONE.value, self.project.id
-        )
+        # doneTasks = task_service.findAllTaskStatusForProject(
+        #     Status.DONE.value, self.project.id
+        # )
         backlogTasks = task_service.findAllTaskStatusForProject(
             Status.BACKLOG.value, self.project.id
         )
@@ -92,11 +93,13 @@ class ProjectViewCLI(CLI):
         if args == []:
             print()
 
-            for task in backlogTasks:
-                Logger.task(task)
+            # for task in doneTasks:
+            #     Logger.task(task)
+
             for task in currentTasks:
                 Logger.task(task)
-            for task in doneTasks:
+
+            for task in backlogTasks:
                 Logger.task(task)
 
             print()
@@ -104,7 +107,15 @@ class ProjectViewCLI(CLI):
     def statusTaskCommand(self, args):
         logs = LogCollection()
 
-        task = task_service.getTaskByOrder(self.project.id, args[0])
+        # TODO: validation
+        orderNumber = None
+        # Check if the args[0] is in the form projectId.order
+        if "." in args[0]:
+            _, orderNumber = args[0].split(".")
+        else:
+            orderNumber = args[0]
+
+        task = task_service.getTaskByOrder(self.project.id, orderNumber)
 
         if task == None:
             logs.error("There is no task with that order")
@@ -179,8 +190,13 @@ class ProjectViewCLI(CLI):
         logs.execute()
 
     def renameTaskCommand(self, args):
-
-        task = task_service.getTaskByOrder(self.project.id, args[0])
+        orderNumber = None
+        # Check if the args[0] is in the form projectId.order
+        if "." in args[0]:
+            _, orderNumber = args[0].split(".")
+        else:
+            orderNumber = args[0]
+        task = task_service.getTaskByOrder(self.project.id, orderNumber)
 
         if task == None:
             self.showScreen()
@@ -205,8 +221,14 @@ class ProjectViewCLI(CLI):
             Logger.success("All project tasks have been deleted!")
 
     def removeTaskCommand(self, args):
+        orderNumber = None
+        # Check if the args[0] is in the form projectId.order
+        if "." in args[0]:
+            _, orderNumber = args[0].split(".")
+        else:
+            orderNumber = args[0]
 
-        task = task_service.getTaskByOrder(self.project.id, args[0])
+        task = task_service.getTaskByOrder(self.project.id, orderNumber)
         if task == None:
             self.showScreen()
             Logger.error("There is no task with that order")
@@ -224,12 +246,61 @@ class ProjectViewCLI(CLI):
         self.showScreen()
         Logger.success("Tasks have been reordered")
 
+    def moveTaskCommand(self, args):
+
+        orderNumbers = []
+        # Check if the args[0] is in the form projectId.order
+        for arg in args:
+            if "." in arg:
+                orderNumbers.append(arg.split(".")[1])
+            else:
+                orderNumbers.append(arg)
+
+        # print(orderNumbers)
+
+        initTask = task_service.getTaskByOrder(self.project.id, orderNumbers[0])
+        if initTask == None:
+            self.showScreen()
+            Logger.error(
+                "There is no task with order "
+                + str(self.project.id)
+                + "."
+                + orderNumbers[0]
+            )
+            return
+
+        destTask = task_service.getTaskByOrder(self.project.id, orderNumbers[1])
+        if destTask == None:
+            self.showScreen()
+            Logger.error(
+                "There is no task with order "
+                + str(self.project.id)
+                + "."
+                + orderNumbers[1]
+            )
+            return
+
+        task_service.updateOrder(self.project.id, orderNumbers[0], orderNumbers[1])
+
+        self.showScreen()
+        Logger.success("Tasks have been moved")
+
     def assignDeadlineCommand(self, args):
         # deadline 2 4 5
 
+        orderNumbers = []
+        # Check if the args[0] is in the form projectId.order
+        for arg in args:
+            if "." in arg:
+                orderNumbers.append(arg.split(".")[1])
+            else:
+                orderNumbers.append(arg)
+
         logs = LogCollection()
 
-        tasks = task_service.getManyTask(self.project.id, args)
+        print(orderNumbers)
+
+        tasks = task_service.getManyTask(self.project.id, orderNumbers)
 
         if len(tasks) == 0:
             self.showScreen()
@@ -271,7 +342,7 @@ class ProjectViewCLI(CLI):
             self.showScreen()
             Logger.error("Project doesn't exist")
             return
-        
+
         if selectedDeadline == None:
             self.showScreen()
             logs.execute()
