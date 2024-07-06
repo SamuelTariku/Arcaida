@@ -41,10 +41,12 @@ class LogCollection:
 
 
 class Logger:
-
+    # Temp logger class, will consolidate into the cli
+    @staticmethod
     def clear():
         os.system("cls" if os.name == "nt" else "clear")
 
+    @staticmethod
     def header():
         print()
         # Generate header text
@@ -54,25 +56,32 @@ class Logger:
         # print(" " * 88)
         print(Fore.RESET, end="")
 
+    @staticmethod
     def celebrate(text, indent=""):
         tprint(indent + text, font="straight")
 
+    @staticmethod
     def success(text, indent=""):
         print(indent, Fore.LIGHTGREEN_EX + "[+]", text, Fore.RESET)
 
+    @staticmethod
     def error(text, indent=""):
         print(indent, Fore.LIGHTRED_EX + "[!]", text, Fore.RESET)
 
+    @staticmethod
     def warn(text, indent=""):
         print(indent, Fore.LIGHTBLACK_EX + "[*]", text, Fore.RESET)
 
+    @staticmethod
     def heading(text, indent=""):
         print(indent, Fore.LIGHTBLUE_EX + "--", text.upper(), "--", Fore.RESET)
         # tprint(indent + text, font="mini")
 
+    @staticmethod
     def info(text, indent=""):
         print(indent, Fore.LIGHTWHITE_EX + "[-]", text, Fore.RESET)
 
+    @staticmethod
     def task(task, noHighlight=False, noIndex=False):
         days = ""
         preColorSet = ""
@@ -108,6 +117,7 @@ class Logger:
                 Fore.RESET + Back.RESET,
             )
 
+    @staticmethod
     def project(project, complete, highlight=False):
         preColorSet = ""
         raw = "{num:>3}. {name:<26} |{progress:<30}| {complete:.0%}"
@@ -130,6 +140,7 @@ class Logger:
             Fore.RESET + Back.RESET,
         )
 
+    @staticmethod
     def deadline(deadline):
         preColorSet = ""
         raw = "{id:>3}. {name:<52} {date}"
