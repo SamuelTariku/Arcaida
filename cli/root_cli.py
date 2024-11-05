@@ -4,9 +4,9 @@ import humanize
 from cli.project_view_cli import ProjectViewCLI
 from models.task_model import Status, Task
 from peewee import DoesNotExist
-from utils.dateUtils import calculateDate, convertDate
-from utils.log import LogCollection
-from utils.simple_cli import *
+from utils.dateUtils import convertDate
+from utils.log import LogCollection, Logger
+from utils.simple_cli import Command, CLI
 from cli.project_cli import ProjectCLI
 from cli.deadline_cli import DeadlineCLI
 from services import project_service, task_service, deadline_service
@@ -88,7 +88,7 @@ class BaseCLI(CLI):
         fixedEnd = datetime.now() + timeDelta
 
         # Check if deadline id id is available
-        if fixedDeadline == None:
+        if fixedDeadline is None:
             logs.info("Creating fixed deadline '{}'".format(name))
             fixedDeadline = deadline_service.createFixedDeadline(id, name, fixedEnd)
         # Check if deadline name is correct
@@ -172,7 +172,7 @@ class BaseCLI(CLI):
 
         for index, project in enumerate(activeProjects):
             complete = task_service.getCompletionForProject(project.id)
-            if currentProject != None and currentProject == project.id:
+            if currentProject is not None and currentProject == project.id:
                 if index != 0:
                     print()
 
@@ -261,7 +261,7 @@ class BaseCLI(CLI):
         currentTasksQuery = task_service.findAllTaskStatus(Status.IN_PROGRESS.value)
 
         # Get next project
-        if projectNumber != None:
+        if projectNumber is not None:
             try:
                 nextProject = project_service.getOneProject(projectNumber)
                 if not nextProject.active:
@@ -288,7 +288,7 @@ class BaseCLI(CLI):
                 nextProject = activeProjects[0]
             else:
                 currentTask = currentTasksQuery[0]
-
+                
                 # find the next project based on project id
                 if not isCurrentProject:
                     nextProjectList = list(
@@ -319,7 +319,7 @@ class BaseCLI(CLI):
             Logger.error("There is an active project with no BACKLOG tasks")
             raise Exception("Active Project with no BACKLOG task")
 
-        if currentTask == None:
+        if currentTask is None:
             firstTodo = todoTasksQuery[0]
         else:
             nextTodoList = list(
@@ -399,14 +399,14 @@ class BaseCLI(CLI):
         for project in activeProjects:
             # Check if the project has remained active for long enough
             elapsed = datetime.now() - project.updated
-            if elapsed < datetime.timedelta(days=INACTIVE_DAYS):
+            if elapsed < timedelta(days=INACTIVE_DAYS):
                 continue
 
-            if currentTask != None:
+            if currentTask is not None:
                 if currentTask.project.id == project.id:
                     # Check how long the current task hasn't been completed
                     elapsed = datetime.now() - currentTask.startDate
-                    if elapsed > datetime.timedelta(days=INACTIVE_DAYS):
+                    if elapsed > timedelta(days=INACTIVE_DAYS):
                         Logger.info(
                             "Project '{}' has not been updated for {} days".format(
                                 project.name, INACTIVE_DAYS
@@ -429,7 +429,7 @@ class BaseCLI(CLI):
                     continue
 
             DoneTasks = task_service.findAllTaskStatusForProject(
-                Status.DONE.value, project.id, orderBy=Task.endDate, desc=True
+                Status.DONE.value, project.id, orderBy=Task.endDate, desc=True # type: ignore
             )
 
             if len(DoneTasks) == 0:
@@ -451,7 +451,7 @@ class BaseCLI(CLI):
             # Check when the last task was completed
             lastDoneTask = DoneTasks[0]
             elapsed = datetime.now() - lastDoneTask.endDate
-            if elapsed > datetime.timedelta(days=INACTIVE_DAYS):
+            if elapsed > timedelta(days=INACTIVE_DAYS):
                 Logger.info(
                     "Project '{}' has not been updated for {} days".format(
                         project.name, INACTIVE_DAYS
@@ -502,7 +502,7 @@ class BaseCLI(CLI):
 
         print("Streak")
         print("  Current: {} tasks".format(today))
-        if highest != None:
+        if highest is not None:
             if days[highest] >= today:
                 print("  Highest: {} tasks | {}".format(days[highest], highest))
                 return
@@ -511,7 +511,7 @@ class BaseCLI(CLI):
 
     def lastTaskCommand(self, args=[]):
         doneTasks = task_service.findAllTaskStatus(
-            Status.DONE.value, orderBy=Task.endDate, desc=True
+            Status.DONE.value, orderBy=Task.endDate, desc=True # type: ignore
         )
 
         if len(doneTasks) == 0:
@@ -536,9 +536,9 @@ class BaseCLI(CLI):
                     Logger.success(
                         "Project {name} is set to active!".format(name=update.name)
                     )
-            except:
+            except DoesNotExist:
                 self.showScreen()
-                Logger.error("Cannot update project " + arg)
+                Logger.error("Unknown Project {}".format(arg))
 
     def deactivateCommand(self, args):
 
@@ -550,9 +550,9 @@ class BaseCLI(CLI):
                     Logger.success(
                         "Project {name} is set to inactive!".format(name=update.name)
                     )
-            except:
+            except DoesNotExist:
                 self.showScreen()
-                Logger.error("Cannot update project " + arg)
+                Logger.error("Unknown Project {}".format(arg))
 
     def openProjectCommand(self, args):
         try:

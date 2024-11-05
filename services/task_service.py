@@ -138,7 +138,6 @@ def updateStatus(task, status):
 
 def deleteTask(task):
 
-    projectID = task.project
     deleted = task.delete_instance()
     # reassignOrder(projectID)
 
@@ -193,12 +192,12 @@ def updateOrder(projectID, current, destination):
     # Update all the records that are between the values
     if initial < final:
         query = Task.update(order=Task.order - 1).where(
-            (Task.project == projectID) & (Task.order > initial) & (Task.order <= final)
+            (Task.project == projectID) & (Task.order > initial) & (Task.order <= final)  # type: ignore
         )
         query.execute()
     elif initial > final:
         query = Task.update(order=Task.order + 1).where(
-            (Task.order < initial) & (Task.order >= final)
+            (Task.order < initial) & (Task.order >= final)  # type: ignore
         )
         query.execute()
 

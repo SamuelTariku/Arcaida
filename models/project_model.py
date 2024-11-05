@@ -1,5 +1,5 @@
 import datetime
-from peewee import *
+from peewee import Model, CharField, BooleanField, DateTimeField
 from utils.config import database
 
 

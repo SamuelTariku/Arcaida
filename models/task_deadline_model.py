@@ -1,7 +1,6 @@
 from models.task_model import Task
 from models.deadline_model import Deadline
-
-from peewee import *
+from peewee import Model, ForeignKeyField
 from utils.config import database
 
 

@@ -18,11 +18,11 @@ def getOneProject(id):
 
 def getActiveProjects(random=False):
     orderBy = Project.id
-
+    
     if random:
         orderBy = fn.Random()
 
-    return Project.select().where(Project.active == True).order_by(orderBy)
+    return Project.select().where(Project.active).order_by(orderBy)
 
 
 # def updateProjectName(id, name):

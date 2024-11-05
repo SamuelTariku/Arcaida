@@ -1,10 +1,10 @@
 from peewee import DoesNotExist
 import humanize
-import datetime
 from cli.deadline_view_cli import DeadlineViewCLI
 from models.deadline_model import DeadlineStates
 from services import deadline_service
-from utils.simple_cli import *
+from utils.log import Logger
+from utils.simple_cli import CLI, Command
 from utils.dateUtils import calculateDate, convertDate, parse_time
 
 

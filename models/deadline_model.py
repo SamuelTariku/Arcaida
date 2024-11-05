@@ -1,4 +1,4 @@
-from peewee import *
+from peewee import Model, CharField, DateTimeField, IntegerField
 from utils.config import database
 from enum import Enum
 

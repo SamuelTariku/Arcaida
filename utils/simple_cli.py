@@ -1,6 +1,4 @@
 from utils.log import Logger
-import os
-
 
 class Command:
     def __init__(self, name, function, count=0) -> None:
@@ -16,7 +14,7 @@ class CLI:
         self.commands = {}
 
     def showScreen(self):
-        raise NotImplemented
+        raise NotImplementedError
 
     def generateCommandDict(self, commands):
         commandDict = {}
@@ -48,7 +46,7 @@ class CLI:
 
         command = self.commands.get(argList[0])
 
-        if command == None:
+        if command is None:
             self.showScreen()
             Logger.error("No command with that name!")
             return

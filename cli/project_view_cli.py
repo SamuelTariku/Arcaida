@@ -1,9 +1,8 @@
 from peewee import DoesNotExist
 
-import datetime
-from utils.simple_cli import *
+from utils.simple_cli import CLI, Command
 from utils.log import Logger, LogCollection
-from utils.dateUtils import calculateDate, convertDate
+from utils.dateUtils import convertDate
 from services import task_service, deadline_service, project_service
 from models.task_model import Status
 
@@ -117,7 +116,7 @@ class ProjectViewCLI(CLI):
 
         task = task_service.getTaskByOrder(self.project.id, orderNumber)
 
-        if task == None:
+        if task is None:
             logs.error("There is no task with that order")
             self.showScreen()
             logs.execute()
@@ -198,7 +197,7 @@ class ProjectViewCLI(CLI):
             orderNumber = args[0]
         task = task_service.getTaskByOrder(self.project.id, orderNumber)
 
-        if task == None:
+        if task is None:
             self.showScreen()
             Logger.error("There is no task with that order")
             return
@@ -229,7 +228,7 @@ class ProjectViewCLI(CLI):
             orderNumber = args[0]
 
         task = task_service.getTaskByOrder(self.project.id, orderNumber)
-        if task == None:
+        if task is None:
             self.showScreen()
             Logger.error("There is no task with that order")
             return
@@ -259,7 +258,7 @@ class ProjectViewCLI(CLI):
         # print(orderNumbers)
 
         initTask = task_service.getTaskByOrder(self.project.id, orderNumbers[0])
-        if initTask == None:
+        if initTask is None:
             self.showScreen()
             Logger.error(
                 "There is no task with order "
@@ -270,7 +269,7 @@ class ProjectViewCLI(CLI):
             return
 
         destTask = task_service.getTaskByOrder(self.project.id, orderNumbers[1])
-        if destTask == None:
+        if destTask is None:
             self.showScreen()
             Logger.error(
                 "There is no task with order "
@@ -343,7 +342,7 @@ class ProjectViewCLI(CLI):
             Logger.error("Project doesn't exist")
             return
 
-        if selectedDeadline == None:
+        if selectedDeadline is None:
             self.showScreen()
             logs.execute()
             Logger.error("There is no deadline with that id")
